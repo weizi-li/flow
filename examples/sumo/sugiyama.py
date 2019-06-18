@@ -5,8 +5,8 @@ This example consists of 22 IDM cars on a ring creating shockwaves.
 
 from flow.controllers import IDMController, ContinuousRouter
 from flow.core.experiment import Experiment
-from flow.core.params import SumoParams, EnvParams, \
-    InitialConfig, NetParams
+from flow.core.params import SumoParams, EnvParams, InitialConfig, NetParams, \
+    SumoCarFollowingParams
 from flow.core.params import VehicleParams
 from flow.envs.loop.loop_accel import AccelEnv, ADDITIONAL_ENV_PARAMS
 from flow.scenarios.loop import LoopScenario, ADDITIONAL_NET_PARAMS
@@ -37,6 +37,9 @@ def sugiyama_example(render=None):
         veh_id="idm",
         acceleration_controller=(IDMController, {}),
         routing_controller=(ContinuousRouter, {}),
+        car_following_params=SumoCarFollowingParams(
+            min_gap=0.0,
+        ),
         num_vehicles=22)
 
     env_params = EnvParams(additional_params=ADDITIONAL_ENV_PARAMS)

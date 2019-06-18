@@ -17,7 +17,7 @@ from ray.tune.registry import register_env
 from flow.utils.registry import make_create_env
 from flow.utils.rllib import FlowParamsEncoder
 from flow.core.params import SumoParams, EnvParams, InitialConfig, NetParams
-from flow.core.params import VehicleParams
+from flow.core.params import VehicleParams, SumoCarFollowingParams
 from flow.controllers import RLController, IDMController, ContinuousRouter
 
 # time horizon of a single rollout
@@ -35,6 +35,9 @@ vehicles.add(
         "noise": 0.2
     }),
     routing_controller=(ContinuousRouter, {}),
+    car_following_params=SumoCarFollowingParams(
+        min_gap=0.0,
+    ),
     num_vehicles=21)
 vehicles.add(
     veh_id="rl",
@@ -81,7 +84,8 @@ flow_params = dict(
             "lanes": 1,
             "speed_limit": 30,
             "resolution": 40,
-        }, ),
+        },
+    ),
 
     # vehicles to be placed in the network at the start of a rollout (see
     # flow.core.params.VehicleParams)
@@ -102,7 +106,7 @@ def setup_exps():
     config["num_workers"] = N_CPUS
     config["train_batch_size"] = HORIZON * N_ROLLOUTS
     config["gamma"] = 0.999  # discount rate
-    config["model"].update({"fcnet_hiddens": [16, 16]})
+    config["model"].update({"fcnet_hiddens": [3, 3]})
     config["use_gae"] = True
     config["lambda"] = 0.97
     config["kl_target"] = 0.02

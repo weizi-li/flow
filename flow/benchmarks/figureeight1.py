@@ -18,6 +18,9 @@ from flow.scenarios.figure_eight import ADDITIONAL_NET_PARAMS
 
 # time horizon of a single rollout
 HORIZON = 1500
+# AV acceleration bounds
+MAX_ACCEL = 3
+MAX_DECEL = 3
 
 # We place 8 autonomous vehicle and 8 human-driven vehicles in the network
 vehicles = VehicleParams()
@@ -30,7 +33,7 @@ for i in range(7):
         routing_controller=(ContinuousRouter, {}),
         car_following_params=SumoCarFollowingParams(
             speed_mode="obey_safe_speed",
-            decel=1.5,
+            decel=7.5,
         ),
         num_vehicles=1)
     vehicles.add(
@@ -39,6 +42,8 @@ for i in range(7):
         routing_controller=(ContinuousRouter, {}),
         car_following_params=SumoCarFollowingParams(
             speed_mode="obey_safe_speed",
+            accel=MAX_ACCEL,
+            decel=MAX_DECEL,
         ),
         num_vehicles=1)
 
@@ -66,8 +71,8 @@ flow_params = dict(
         horizon=HORIZON,
         additional_params={
             "target_velocity": 20,
-            "max_accel": 3,
-            "max_decel": 3,
+            "max_accel": MAX_ACCEL,
+            "max_decel": MAX_DECEL,
             "sort_vehicles": False
         },
     ),

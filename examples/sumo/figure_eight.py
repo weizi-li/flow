@@ -28,7 +28,7 @@ def figure_eight_example(render=None):
         A non-rl experiment demonstrating the performance of human-driven
         vehicles on a figure eight.
     """
-    sim_params = SumoParams(render=True)
+    sim_params = SumoParams(render=True, emission_path="./data/")
 
     if render is not None:
         sim_params.render = render
@@ -36,12 +36,12 @@ def figure_eight_example(render=None):
     vehicles = VehicleParams()
     vehicles.add(
         veh_id="idm",
-        acceleration_controller=(IDMController, {}),
+        acceleration_controller=(IDMController, {"noise": 0.2}),
         lane_change_controller=(StaticLaneChanger, {}),
         routing_controller=(ContinuousRouter, {}),
         car_following_params=SumoCarFollowingParams(
             speed_mode="obey_safe_speed",
-            decel=1.5,
+            decel=7.5,
         ),
         initial_speed=0,
         num_vehicles=14)
@@ -67,4 +67,4 @@ if __name__ == "__main__":
     exp = figure_eight_example()
 
     # run for a set number of rollouts / time steps
-    exp.run(1, 1500)
+    exp.run(1, 1500, convert_to_csv=True)

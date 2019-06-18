@@ -8,7 +8,7 @@ from rllab.policies.gaussian_gru_policy import GaussianGRUPolicy
 
 from flow.scenarios.loop import LoopScenario
 from flow.controllers import RLController, IDMController, ContinuousRouter
-from flow.core.params import VehicleParams
+from flow.core.params import VehicleParams, SumoCarFollowingParams
 from flow.core.params import SumoParams, EnvParams, NetParams, InitialConfig
 from rllab.envs.gym_env import GymEnv
 
@@ -29,6 +29,9 @@ def run_task(*_):
         veh_id="idm",
         acceleration_controller=(IDMController, {}),
         routing_controller=(ContinuousRouter, {}),
+        car_following_params=SumoCarFollowingParams(
+            min_gap=0.0,
+        ),
         num_vehicles=21)
 
     additional_env_params = {
