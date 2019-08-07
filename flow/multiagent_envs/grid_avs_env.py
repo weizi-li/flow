@@ -92,6 +92,7 @@ class MultiGridAVsPOEnv(PO_TrafficLightGridEnv, MultiEnv):
         - Local edge information (density, avg speed)
         - Ego vehicle observations (speed, max speed, headway, tailway,
           distance to intersection)
+        - Environment parameters (inflow rate)
         """
         # traffic_light_obs = 3 * (1 + self.num_local_lights) * \
         #                     self.traffic_lights
@@ -101,7 +102,7 @@ class MultiGridAVsPOEnv(PO_TrafficLightGridEnv, MultiEnv):
             high=1,
             shape=(3 * self.num_local_edges * self.num_observed +
                    2 * self.num_local_edges +
-                   5,
+                   6,
                    # traffic_light_obs,
                    ),
             dtype=np.float32)
@@ -131,6 +132,9 @@ class MultiGridAVsPOEnv(PO_TrafficLightGridEnv, MultiEnv):
         included), gives the traffic light information, including the last
         change time, light direction (i.e. phase), and a currently_yellow flag.
         """
+        # normalize flow rate by 1000 * number of (horizonal) lanes
+        env_obs = [self.flow_rate / 1000 / self.num_lanes]
+
         # TODO(cathywu) CHANGE
         # Normalization factors
         max_speed = max(
@@ -179,9 +183,13 @@ class MultiGridAVsPOEnv(PO_TrafficLightGridEnv, MultiEnv):
 
             edge = self.k.vehicle.get_edge(rl_id)
             if edge[0] == ":":  # center
+                # FIXME(cathywu) This is a bit dumb, that the vehicle
+                # essentially becomes "blind" in the intersection. Consider
+                # keeping track of the previous edge and computing the local
+                # edges based on that.
                 observation = np.array(np.concatenate([[0] * (
                     3 * self.num_local_edges * self.num_observed + 2 *
-                    self.num_local_edges), ego_obs]))
+                    self.num_local_edges), ego_obs, env_obs]))
                 obs.update({rl_id: observation})
                 continue
 
@@ -228,7 +236,7 @@ class MultiGridAVsPOEnv(PO_TrafficLightGridEnv, MultiEnv):
             observation = np.array(np.concatenate(
                 [local_speeds, local_dists_to_intersec, local_veh_types,
                  density[local_edge_numbers], velocity_avg[local_edge_numbers],
-                 ego_obs]))
+                 ego_obs, env_obs]))
 
             obs.update({rl_id: observation})
 

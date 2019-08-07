@@ -90,6 +90,9 @@ class TrafficLightGridEnv(Env):
                 raise KeyError(
                     'Environment parameter "{}" not supplied'.format(p))
 
+        self.flow_rate = env_params.additional_params["inflow_base"]
+        self.num_lanes = scenario.net_params.additional_params[
+            "horizontal_lanes"]
         self.grid_array = scenario.net_params.additional_params["grid_array"]
         self.rows = self.grid_array["row_num"]
         self.cols = self.grid_array["col_num"]
@@ -273,8 +276,8 @@ class TrafficLightGridEnv(Env):
         if add_params.get("reset_inflow"):
             inflow_base = add_params.get("inflow_base")
             inflow_delta = add_params.get("inflow_delta")
-            flow_rate = np.random.uniform(inflow_base - inflow_delta,
-                                          inflow_base + inflow_delta)
+            self.flow_rate = np.random.uniform(inflow_base - inflow_delta,
+                                               inflow_base + inflow_delta)
 
             fraction_av = add_params.get("fraction_av")
             speed_enter = add_params.get("speed_enter")
@@ -296,13 +299,13 @@ class TrafficLightGridEnv(Env):
                         inflow.add(
                             veh_type="human",
                             edge=edge,
-                            vehs_per_hour=flow_rate * (1-fraction_av),
+                            vehs_per_hour=self.flow_rate * (1-fraction_av),
                             departLane="free",
                             departSpeed=speed_enter)
                         inflow.add(
                             veh_type="followerstopper",
                             edge=edge,
-                            vehs_per_hour=flow_rate * fraction_av,
+                            vehs_per_hour=self.flow_rate * fraction_av,
                             departLane="free",
                             departSpeed=speed_enter)
 
