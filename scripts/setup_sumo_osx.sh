@@ -14,7 +14,7 @@ mkdir -p $HOME/sumo_binaries
 pushd $HOME/sumo_binaries
 git clone https://github.com/eclipse/sumo.git
 cd sumo
-git checkout 2147d155b1
+git checkout e9bb57fd7c
 cmake .
 make -j$(nproc)
 popd
