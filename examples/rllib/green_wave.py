@@ -84,7 +84,7 @@ def get_flow_params(col_num, row_num, additional_net_params):
             edge=outer_edges[i],
             probability=0.25,
             departLane='free',
-            departSpeed=20)
+            departSpeed=10)
 
     net = NetParams(
         inflows=inflow,
@@ -123,7 +123,7 @@ def get_non_flow_params(enter_speed, add_net_params):
     return initial, net
 
 
-V_ENTER = 30
+V_ENTER = 15
 INNER_LENGTH = 300
 LONG_LENGTH = 100
 SHORT_LENGTH = 300
@@ -281,7 +281,7 @@ def setup_exps(use_inflows=False):
 
 if __name__ == '__main__':
     alg_run, gym_name, config = setup_exps()
-    ray.init(num_cpus=N_CPUS + 1, redirect_output=False)
+    ray.init(num_cpus=N_CPUS + 1)
     trials = run_experiments({
         flow_params['exp_tag']: {
             'run': alg_run,

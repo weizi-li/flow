@@ -138,7 +138,7 @@ def setup_exps():
 
 if __name__ == "__main__":
     alg_run, gym_name, config = setup_exps()
-    ray.init(num_cpus=N_CPUS + 1, redirect_output=False)
+    ray.init(num_cpus=N_CPUS + 1)
     trials = run_experiments({
         flow_params["exp_tag"]: {
             "run": alg_run,
@@ -146,7 +146,7 @@ if __name__ == "__main__":
             "config": {
                 **config
             },
-            "checkpoint_freq": 20,
+            "checkpoint_freq": 1,
             "checkpoint_at_end": True,
             "max_failures": 999,
             "stop": {

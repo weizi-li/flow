@@ -63,7 +63,7 @@ def visualizer_rllib(args):
 
     # check if we have a multiagent scenario but in a
     # backwards compatible way
-    if config.get('multiagent', {}).get('policy_graphs', {}):
+    if config.get('multiagent', {}).get('policies', {}):
         multiagent = True
         config['multiagent'] = pkl['multiagent']
     else:
@@ -167,7 +167,7 @@ def visualizer_rllib(args):
         rets = {}
         # map the agent id to its policy
         policy_map_fn = config['multiagent']['policy_mapping_fn'].func
-        for key in config['multiagent']['policy_graphs'].keys():
+        for key in config['multiagent']['policies'].keys():
             rets[key] = []
     else:
         rets = []
@@ -179,7 +179,7 @@ def visualizer_rllib(args):
             # map the agent id to its policy
             policy_map_fn = config['multiagent']['policy_mapping_fn'].func
             size = config['model']['lstm_cell_size']
-            for key in config['multiagent']['policy_graphs'].keys():
+            for key in config['multiagent']['policies'].keys():
                 state_init[key] = [np.zeros(size, np.float32),
                                    np.zeros(size, np.float32)
                                    ]
@@ -308,7 +308,11 @@ def visualizer_rllib(args):
         emission_path = \
             '{0}/test_time_rollout/{1}'.format(dir_path, emission_filename)
 
+        # convert the emission file into a csv file
         emission_to_csv(emission_path)
+
+        # delete the .xml version of the emission file
+        os.remove(emission_path)
 
     # if we wanted to save the render, here we create the movie
     if args.save_render:

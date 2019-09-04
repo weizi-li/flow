@@ -28,7 +28,7 @@ import flow.benchmarks.merge1 as merge1
 import flow.benchmarks.merge2 as merge2
 
 N_CPUS = 1
-ray.init(num_cpus=N_CPUS, redirect_output=True)
+ray.init(num_cpus=N_CPUS)
 
 os.environ['TEST_FLAG'] = 'True'
 
@@ -41,7 +41,7 @@ class TestBenchmarks(unittest.TestCase):
     reported on the website, or other).
     """
 
-    def setup(self):
+    def setUp(self):
         if not os.path.exists('./benchmark_tmp'):
             os.mkdir('benchmark_tmp')
 

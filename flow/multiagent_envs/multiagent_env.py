@@ -178,7 +178,7 @@ class MultiEnv(MultiAgentEnv, Env):
                 try:
                     self.k.vehicle.remove(veh_id)
                 except (FatalTraCIError, TraCIException):
-                    pass
+                    print(traceback.format_exc())
 
         # clear all vehicles from the network and the vehicles class
         # FIXME (ev, ak) this is weird and shouldn't be necessary
@@ -191,6 +191,9 @@ class MultiEnv(MultiAgentEnv, Env):
                 self.k.vehicle.remove(veh_id)
             except (FatalTraCIError, TraCIException):
                 print("Error during start: {}".format(traceback.format_exc()))
+
+        # update so that all the vehicles are removed before they are added.
+        self.k.simulation.simulation_step()
 
         # reintroduce the initial vehicles to the network
         for veh_id in self.initial_ids:

@@ -8,7 +8,7 @@ try:
     from ray.rllib.agents.agent import get_agent_class
 except ImportError:
     from ray.rllib.agents.registry import get_agent_class
-from ray.rllib.agents.ppo.ppo_policy_graph import PPOPolicyGraph
+from ray.rllib.agents.ppo.ppo_policy import PPOTFPolicy
 from ray import tune
 from ray.tune.registry import register_env
 from ray.tune import run_experiments
@@ -38,10 +38,19 @@ def make_flow_params(n_rows, n_columns, edge_inflow):
     """
     Generate the flow params for the experiment.
 
-    :param n_rows:
-    :param n_columns:
-    :param edge_inflow:
-    :return:
+    Parameters
+    ----------
+    n_rows : int
+        number of rows in the grid
+    n_columns : int
+        number of columns in the grid
+    edge_inflow : float
+
+
+    Returns
+    -------
+    dict
+        flow_params object
     """
     # we place a sufficient number of vehicles to ensure they confirm with the
     # total number specified above. We also use a "right_of_way" speed mode to
@@ -194,7 +203,7 @@ def setup_exps_PPO(flow_params):
     act_space = test_env.action_space
 
     def gen_policy():
-        return (PPOPolicyGraph, obs_space, act_space, {})
+        return PPOTFPolicy, obs_space, act_space, {}
 
     # Setup PG with a single policy graph for all agents
     policy_graphs = {'av': gen_policy()}
@@ -204,7 +213,7 @@ def setup_exps_PPO(flow_params):
 
     config.update({
         'multiagent': {
-            'policy_graphs': policy_graphs,
+            'policies': policy_graphs,
             'policy_mapping_fn': tune.function(policy_mapping_fn),
             'policies_to_train': ['av']
         }
