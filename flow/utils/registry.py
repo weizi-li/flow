@@ -11,18 +11,16 @@ from flow.core.params import TrafficLightParams
 
 
 def make_create_env(params, version=0, render=None):
-    """Create a parametrized flow environment compatible with OpenAI gym.
-
-    Test!
+    """Create a parameterized flow environment compatible with OpenAI gym.
 
     This environment creation method allows for the specification of several
     key parameters when creating any flow environment, including the requested
     environment and network classes, and the inputs needed to make these
     classes generalizable to networks of varying sizes and shapes, and well as
-    varying forms of control (e.g. AVs, automated traffic lights, etc...).
+    varying forms of control (e.g., AVs, traffic lights, etc.).
 
-    This method can also be used to recreate the environment a policy was
-    trained on and assess it performance, or a modified form of the previous
+    This method can also be used to recreate the environment that a policy was
+    trained on and assess the corresponding performance, or a modified form of the previous
     environment may be used to profile the performance of the policy on other
     types of networks.
 
@@ -34,7 +32,7 @@ def make_create_env(params, version=0, render=None):
          - exp_tag: name of the experiment
          - env_name: name of the flow environment the experiment is running on
          - network: name of the network class the experiment uses
-         - simulator: simulator that is used by the experiment (e.g. aimsun)
+         - simulator: simulator that is used by the experiment (traci or aimsun)
          - sim: simulation-related parameters (see flow.core.params.SimParams)
          - env: environment related parameters (see flow.core.params.EnvParams)
          - net: network-related parameters (see flow.core.params.NetParams and
@@ -65,6 +63,8 @@ def make_create_env(params, version=0, render=None):
 
     module = __import__("flow.networks", fromlist=[params["network"]])
     network_class = getattr(module, params["network"])
+    #module = __import__("flow.scenarios", fromlist=[params["scenario"]])
+    #network_class = getattr(module, params["scenario"])
 
     env_params = params['env']
     net_params = params['net']
@@ -96,6 +96,9 @@ def make_create_env(params, version=0, render=None):
         else:
             env_loc = 'flow.envs.multiagent'
 
+        print("#############")
+        print(network)
+        print("#############")
         try:
             register(
                 id=env_name,
@@ -108,6 +111,8 @@ def make_create_env(params, version=0, render=None):
                 })
         except Exception:
             pass
+
+
         return gym.envs.make(env_name)
 
     return create_env, env_name

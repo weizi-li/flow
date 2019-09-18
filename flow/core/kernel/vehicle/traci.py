@@ -470,8 +470,15 @@ class TraCIVehicle(KernelVehicle):
         """See parent class."""
         if len(self._num_arrived) == 0:
             return 0
+
+        # ._num_arrived is a list that stores the number of vehicles
+        # leaving the network at every simulation step
+        # here, we get the sublist which contains the last time_span (in seconds), the number of vehicles
+        # leaving the network
         num_outflow = self._num_arrived[-int(time_span / self.sim_step):]
-        return 3600 * sum(num_outflow) / (len(num_outflow) * self.sim_step)
+
+        # we estimate how many vehicles in total has left the network in one hour
+        return sum(num_outflow) * 3600 / (len(num_outflow) * self.sim_step)
 
     def get_num_arrived(self):
         """See parent class."""

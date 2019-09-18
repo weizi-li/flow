@@ -4,7 +4,7 @@ import numpy as np
 
 
 def desired_velocity(env, fail=False, edge_list=None):
-    r"""Encourage proximity to a desired velocity.
+    """Encourage proximity to a desired velocity.
 
     This function measures the deviation of a system of vehicles from a
     user-specified desired velocity peaking when all vehicles in the ring
@@ -89,7 +89,7 @@ def average_velocity(env, fail=False):
 
 
 def rl_forward_progress(env, gain=0.1):
-    """Rewared function used to reward the RL vehicles for travelling forward.
+    """Reward function used to reward the RL vehicles for travelling forward.
 
     Parameters
     ----------
@@ -253,7 +253,7 @@ def penalize_near_standstill(env, thresh=0.3, gain=1):
     vel = np.array(env.k.vehicle.get_speed(veh_ids))
     penalize = len(vel[vel < thresh])
     penalty = gain * penalize
-    return -penalty
+    return -penaltynp.linalg.norm
 
 
 def penalize_headway_variance(vehicles,

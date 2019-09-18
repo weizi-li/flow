@@ -28,9 +28,9 @@ class Experiment:
         >>> rl_actions = lambda state: 0  # replace with something appropriate
         >>> exp.run(num_runs=1, num_steps=1000, rl_actions=rl_actions)
 
-    Finally, if you would like to like to plot and visualize your results, this
-    class can generate csv files from emission files produced by sumo. These
-    files will contain the speeds, positions, edges, etc... of every vehicle
+    Finally, if you would like to plot and visualize your results, this
+    class can generate csv files from emission files produced by SUMO. These
+    files will contain the speeds, positions, edges, etc. of every vehicle
     in the network at every time step.
 
     In order to ensure that the simulator constructs an emission file, set the
@@ -46,7 +46,7 @@ class Experiment:
 
     After the experiment is complete, look at the "./data" directory. There
     will be two files, one with the suffix .xml and another with the suffix
-    .csv. The latter should be easily interpretable from any csv reader (e.g.
+    .csv. The latter should be easily interpretable from any csv reader (e.g.,
     Excel), and can be parsed using tools such as numpy and pandas.
 
     Attributes
@@ -59,12 +59,12 @@ class Experiment:
         """Instantiate Experiment."""
         self.env = env
 
-        logging.info(" Starting experiment {} at {}".format(
+        logging.info("Starting experiment {} at {}".format(
             env.network.name, str(datetime.datetime.utcnow())))
 
         logging.info("Initializing environment.")
 
-    def run(self, num_runs, num_steps, rl_actions=None, convert_to_csv=False):
+    def run(self, num_runs, num_steps, rl_actions=None, convert_to_csv=False, output_to_terminal=True):
         """Run the given network for a set number of runs and steps per run.
 
         Parameters
@@ -72,7 +72,7 @@ class Experiment:
         num_runs : int
             number of runs the experiment should perform
         num_steps : int
-            number of steps to be performs in each run of the experiment
+            number of steps to be performed in each run of the experiment
         rl_actions : method, optional
             maps states to actions to be performed by the RL agents (if
             there are any)
@@ -103,13 +103,16 @@ class Experiment:
             def rl_actions(*_):
                 return None
 
-        rets = []
+        rets = [] # returns
         mean_rets = []
         ret_lists = []
         vels = []
         mean_vels = []
         std_vels = []
         outflows = []
+        inflows = []
+
+
         for i in range(num_runs):
             vel = np.zeros(num_steps)
             logging.info("Iter #" + str(i))
@@ -131,8 +134,21 @@ class Experiment:
             ret_lists.append(ret_list)
             mean_vels.append(np.mean(vel))
             std_vels.append(np.std(vel))
+
+            # get the outflows and inflows for the past 500 seconds, if the simulation is less than
+            # 500 seconds then the following will get all inflows (the number of vehicles entering the network)
+            # and outflows (the number of vehicles leaving the network) during the entire simulation time span
             outflows.append(self.env.k.vehicle.get_outflow_rate(int(500)))
-            print("Round {0}, return: {1}".format(i, ret))
+
+            ######################
+            ### added by Weizi ###
+            inflows.append(self.env.k.vehicle.get_inflow_rate(int(500)))
+            if np.all(np.array(inflows) > 1e-5):
+                throughput = [x / y for x, y in zip(outflows, inflows)]
+            else:
+                throughput = [0] * len(inflows)
+            ######################
+
 
         info_dict["returns"] = rets
         info_dict["velocities"] = vels
@@ -140,10 +156,23 @@ class Experiment:
         info_dict["per_step_returns"] = ret_lists
         info_dict["mean_outflows"] = np.mean(outflows)
 
-        print("Average, std return: {}, {}".format(
-            np.mean(rets), np.std(rets)))
-        print("Average, std speed: {}, {}".format(
-            np.mean(mean_vels), np.std(mean_vels)))
+        if output_to_terminal:
+            print("Round {0} -- Return: {1}".format(i, ret))
+            print("Return: {} (avg), {} (std)".format(
+                np.around(np.mean(rets), decimals=2), np.around(np.std(rets), decimals=2)))
+
+            print("Speed (m/s): {} (avg), {} (std)".format(
+                np.around(np.mean(mean_vels), decimals=2), np.around(np.std(mean_vels), decimals=2)))
+
+            ### added by Weizi ###
+            print("Throughput (veh/hr): {} (avg), {} (std)".format(np.around(np.mean(throughput), decimals=2),
+                                                np.around(np.std(throughput), decimals=2)))
+
+        ### added by Weizi ###
+        info_dict["avg_spd"] = np.around(np.mean(mean_vels), decimals=2)
+        info_dict["avg_tpt"] = np.around(np.mean(throughput), decimals=2)
+
+
         self.env.terminate()
 
         if convert_to_csv:

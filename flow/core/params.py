@@ -265,9 +265,9 @@ class VehicleParams:
         num_vehicles : int, optional
             number of vehicles of this type to be added to the network
         car_following_params : flow.core.params.SumoCarFollowingParams
-            Params object specifying attributes for Sumo car following model.
+            Params object specifying attributes for SUMO car following model.
         lane_change_params : flow.core.params.SumoLaneChangeParams
-            Params object specifying attributes for Sumo lane changing model.
+            Params object specifying attributes for SUMO lane changing model.
         """
         if car_following_params is None:
             # FIXME: depends on simulator
@@ -282,7 +282,7 @@ class VehicleParams:
         type_params.update(lane_change_params.controller_params)
 
         # This dict will be used when trying to introduce new vehicles into
-        # the network via a Flow. It is passed to the vehicle kernel object
+        # the network via Flow. It is passed to the vehicle kernel object
         # during environment instantiation.
         self.type_parameters[veh_id] = \
             {"acceleration_controller": acceleration_controller,
@@ -496,13 +496,13 @@ class AimsunParams(SimParams):
 
 
 class SumoParams(SimParams):
-    """Sumo-specific simulation parameters.
+    """SUMO-specific simulation parameters.
 
     Extends SimParams.
 
-    These parameters are used to customize a sumo simulation instance upon
+    These parameters are used to customize a SUMO simulation instance upon
     initialization. This includes passing the simulation step length,
-    specifying whether to use sumo's gui during a run, and other features
+    specifying whether to use SUMO's gui during a run, and other features
     described in the Attributes below.
 
     Attributes
@@ -519,7 +519,7 @@ class SumoParams(SimParams):
         no sublanes). If this value is specified, the vehicle in the
         network cannot use the "LC2013" lane change model.
     no_step_log : bool, optional
-        specifies whether to add sumo's step logs to the log file, and
+        specifies whether to add SUMO's step logs to the log file, and
         print them into the terminal during runtime, defaults to True
     render : str or bool, optional
         specifies whether to visualize the rollout(s)
@@ -607,11 +607,11 @@ class EnvParams:
         number of steps performed before the initialization of training
         during a rollout. These warmup steps are not added as steps
         into training, and the actions of rl agents during these steps
-        are dictated by sumo. Defaults to zero
+        are dictated by SUMO. Defaults to zero
     sims_per_step : int, optional
-        number of sumo simulation steps performed in any given rollout
+        number of SUMO simulation steps performed in any given rollout
         step. RL agents perform the same action for the duration of
-        these simulation steps.
+        these simulation steps
     evaluate : bool, optional
         flag indicating that the evaluation reward should be used
         so the evaluation reward should be used rather than the
@@ -717,7 +717,6 @@ class InitialConfig:
     edges_distribution : str or list of str or dict, optional
         edges vehicles may be placed on during initialization, may be one
         of:
-
         * "all": vehicles are distributed over all edges
         * list of edges: list of edges vehicles can be distributed over
         * dict of edges: where the key is the name of the edge to be
@@ -755,7 +754,7 @@ class InitialConfig:
 
 
 class SumoCarFollowingParams:
-    """Parameters for sumo-controlled acceleration behavior.
+    """Parameters for SUMO-controlled acceleration behavior.
 
     Attributes
     ----------
@@ -1081,7 +1080,8 @@ class InFlows:
             end=86400,
             number=None,
             **kwargs):
-        r"""Specify a new inflow for a given type of vehicles and edge.
+
+        """Specify a new inflow for a given type of vehicles and edge.
 
         Parameters
         ----------
@@ -1102,20 +1102,18 @@ class InFlows:
         depart_lane : int or str
             the lane on which the vehicle shall be inserted. Can be either one
             of:
-
-            * int >= 0: index of the lane (starting with rightmost = 0)
-            * "random": a random lane is chosen, but the vehicle insertion is
+            - int >= 0: index of the lane (starting with rightmost = 0)
+            - "random": a random lane is chosen, but the vehicle insertion is
               not retried if it could not be inserted
-            * "free": the most free (least occupied) lane is chosen
-            * "best": the "free" lane (see above) among those who allow the
+            - "free": the most free (least occupied) lane is chosen
+            - "best": the "free" lane (see above) among those who allow the
               vehicle the longest ride without the need to change lane
-            * "first": the rightmost lane the vehicle may use
-
+            - "first": the rightmost lane the vehicle may use
             Defaults to "first".
+
         depart_speed : float or str
             the speed with which the vehicle shall enter the network (in m/s)
             can be either one of:
-
             - float >= 0: the vehicle is tried to be inserted using the given
               speed; if that speed is unsafe, departure is delayed
             - "random": vehicles enter the edge with a random speed between 0
@@ -1124,8 +1122,9 @@ class InFlows:
             - "speedLimit": vehicles enter the edge with the maximum speed that
               is allowed on this edge; if that speed is unsafe, departure is
               delayed
+            - Defaults to 0.
 
-            Defaults to 0.
+
         name : str, optional
             prefix for the id of the vehicles entering via this inflow.
             Defaults to "flow"
