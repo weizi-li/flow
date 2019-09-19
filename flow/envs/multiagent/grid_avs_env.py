@@ -1,4 +1,5 @@
-"""Multi-agent environments for scenario with grid and AVs
+"""Multi-agent environments for network with grid and AVs
+# Weizi: changed all "scenario" to "network"
 
 These environments are used to train AVs to regulate traffic flow through an
 n x m grid.
@@ -11,7 +12,7 @@ from gym.spaces.box import Box
 
 from flow.core import rewards
 from flow.envs.traffic_light_grid import TrafficLightGridPOEnv
-from flow.envs.multiagent.base import MultiEnv
+from flow.envs.multiagent import MultiEnv
 
 MAX_LANES = 1
 
@@ -47,8 +48,8 @@ class MultiGridAVsPOEnv(TrafficLightGridPOEnv, MultiEnv):
 
     """
 
-    def __init__(self, env_params, sim_params, scenario, simulator='traci'):
-        super().__init__(env_params, sim_params, scenario, simulator)
+    def __init__(self, env_params, sim_params, network, simulator='traci'):
+        super().__init__(env_params, sim_params, network, simulator)
         for p in ADDITIONAL_RL_ENV_PARAMS.keys():
             if p not in env_params.additional_params:
                 raise KeyError(
@@ -72,7 +73,9 @@ class MultiGridAVsPOEnv(TrafficLightGridPOEnv, MultiEnv):
         self.add_rl_if_exit = env_params.get_additional_param("add_rl_if_exit")
         self.num_rl = deepcopy(self.initial_vehicles.num_rl_vehicles)
         self.rl_id_list = deepcopy(self.initial_vehicles.get_rl_ids())
-        self.max_speed = self.k.scenario.max_speed()
+
+	
+        self.max_speed = self.k.network.max_speed()
 
         # list of controlled edges for comparison
         outer_edges = []
@@ -115,7 +118,7 @@ class MultiGridAVsPOEnv(TrafficLightGridPOEnv, MultiEnv):
         max_accel = add_params.get("max_accel")
         max_decel = add_params.get("max_decel")
         # TODO(cathywu) later on, support num_lanes
-        # num_lanes = self.k.scenario.num_lanes()
+        # num_lanes = self.k.network.num_lanes()
         return Box(
             low=-max_decel*self.sim_step, high=max_accel*self.sim_step,
             shape=(1, ), dtype=np.float32)
@@ -138,8 +141,8 @@ class MultiGridAVsPOEnv(TrafficLightGridPOEnv, MultiEnv):
         # TODO(cathywu) CHANGE
         # Normalization factors
         max_speed = max(
-            self.k.scenario.speed_limit(edge)
-            for edge in self.k.scenario.get_edge_list())
+            self.k.network.speed_limit(edge)
+            for edge in self.k.network.get_edge_list())
         grid_array = self.net_params.additional_params["grid_array"]
         max_dist = max(grid_array["short_length"], grid_array["long_length"],
                        grid_array["inner_length"])
@@ -147,11 +150,11 @@ class MultiGridAVsPOEnv(TrafficLightGridPOEnv, MultiEnv):
         # Edge information
         density = []
         velocity_avg = []
-        for edge in self.k.scenario.get_edge_list():
+        for edge in self.k.network.get_edge_list():
             ids = self.k.vehicle.get_ids_by_edge(edge)
             if len(ids) > 0:
                 # TODO(cathywu) Why is there a 5 here?
-                density += [5 * len(ids) / self.k.scenario.edge_length(edge)]
+                density += [5 * len(ids) / self.k.network.edge_length(edge)]
                 velocity_avg += [np.mean(
                     [self.k.vehicle.get_speed(veh_id) for veh_id in
                      ids]) / max_speed]
@@ -165,7 +168,7 @@ class MultiGridAVsPOEnv(TrafficLightGridPOEnv, MultiEnv):
 
         obs = {}
         all_observed_ids = []
-        ego_edges = self.scenario.ego_edges
+        ego_edges = self.network.ego_edges
         for rl_id in self.k.vehicle.get_rl_ids():
             # Ego vehicle information
             ego_speed = self.k.vehicle.get_speed(rl_id) / max_speed
@@ -175,7 +178,7 @@ class MultiGridAVsPOEnv(TrafficLightGridPOEnv, MultiEnv):
             # map no tailway (-1000) to 1.0
             ego_tailway = min(np.abs(self.k.vehicle.get_tailway(rl_id)),
                               max_dist) / max_dist
-            ego_dist_to_intersec = (self.k.scenario.edge_length(
+            ego_dist_to_intersec = (self.k.network.edge_length(
                 self.k.vehicle.get_edge(rl_id)) - self.k.vehicle.get_position(
                 rl_id)) / max_dist
             ego_obs = [ego_speed, ego_max_speed, ego_headway, ego_tailway,
@@ -200,7 +203,7 @@ class MultiGridAVsPOEnv(TrafficLightGridPOEnv, MultiEnv):
             for local_edge in local_edges:
                 try:
                     local_edge_numbers.append(
-                        self.k.scenario.get_edge_list().index(local_edge))
+                        self.k.network.get_edge_list().index(local_edge))
                 except ValueError:
                     # Invalid edge
                     local_edge_numbers.append(-1)
@@ -219,7 +222,7 @@ class MultiGridAVsPOEnv(TrafficLightGridPOEnv, MultiEnv):
                 local_speeds.extend(
                     [self.k.vehicle.get_speed(veh_id) / max_speed for veh_id in
                      observed_ids])
-                local_dists_to_intersec.extend([(self.k.scenario.edge_length(
+                local_dists_to_intersec.extend([(self.k.network.edge_length(
                     self.k.vehicle.get_edge(
                         veh_id)) - self.k.vehicle.get_position(
                     veh_id)) / max_dist for veh_id in observed_ids])

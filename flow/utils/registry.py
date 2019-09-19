@@ -96,9 +96,6 @@ def make_create_env(params, version=0, render=None):
         else:
             env_loc = 'flow.envs.multiagent'
 
-        print("#############")
-        print(network)
-        print("#############")
         try:
             register(
                 id=env_name,

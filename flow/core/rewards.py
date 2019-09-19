@@ -2,6 +2,8 @@
 
 import numpy as np
 
+#from flow.utils.flow_warnings import deprecated
+
 
 def desired_velocity(env, fail=False, edge_list=None):
     """Encourage proximity to a desired velocity.
@@ -205,7 +207,30 @@ def min_delay_unscaled(env):
     return cost / (env.k.vehicle.num_vehicles + eps)
 
 
-def penalize_standstill(env, gain=1):
+def delay(env):
+    """Return the total delay for all vehicles in the system.		
+    Parameters		
+    ----------		
+    env : flow.envs.Env		
+        the environment variable, which contains information on the current		
+        state of the system.		
+    Returns		
+    -------		
+    float		
+        reward value		
+    """		
+    departed = env.k.vehicle.get_timestep_departed(env.k.vehicle.get_ids())		
+    now = env.time_counter	
+    print("################")
+    type(now)
+    type(np.array(departed))
+    print("################")	
+    delays = now - np.array(departed)		
+    cost = np.sum(delays)		
+    return cost
+
+
+def penalize_standstill(env, gain=1, threshold=0):
     """Reward function that penalizes vehicle standstill.
 
     Is it better for this to be:
@@ -227,33 +252,34 @@ def penalize_standstill(env, gain=1):
     """
     veh_ids = env.k.vehicle.get_ids()
     vel = np.array(env.k.vehicle.get_speed(veh_ids))
-    num_standstill = len(vel[vel == 0])
+    num_standstill = len(vel[vel <= threshold])
     penalty = gain * num_standstill
     return -penalty
 
 
-def penalize_near_standstill(env, thresh=0.3, gain=1):
-    """Reward function which penalizes vehicles at a low velocity.
-
-    This reward function is used to penalize vehicles below a
-    specified threshold. This assists with discouraging RL from
-    gamifying a scenario, which can result in standstill behavior
-    or similarly bad, near-zero velocities.
-
-    Parameters
-    ----------
-    env : flow.envs.Env
-        the environment variable, which contains information on the current
-    thresh : float
-        the velocity threshold below which penalties are applied
-    gain : float
-        multiplicative factor on the action penalty
-    """
-    veh_ids = env.k.vehicle.get_ids()
-    vel = np.array(env.k.vehicle.get_speed(veh_ids))
-    penalize = len(vel[vel < thresh])
-    penalty = gain * penalize
-    return -penaltynp.linalg.norm
+# @deprecated("Use rewards.penalize_standstill instead.")
+# def penalize_near_standstill(env, thresh=0.3, gain=1):
+#     """Reward function which penalizes vehicles at a low velocity.
+#
+#     This reward function is used to penalize vehicles below a
+#     specified threshold. This assists with discouraging RL from
+#     gamifying a scenario, which can result in standstill behavior
+#     or similarly bad, near-zero velocities.
+#
+#     Parameters
+#     ----------
+#     env : flow.envs.Env
+#         the environment variable, which contains information on the current
+#     thresh : float
+#         the velocity threshold below which penalties are applied
+#     gain : float
+#         multiplicative factor on the action penalty
+#     """
+#     veh_ids = env.k.vehicle.get_ids()
+#     vel = np.array(env.k.vehicle.get_speed(veh_ids))
+#     penalize = len(vel[vel < thresh])
+#     penalty = gain * penalize
+#     return -penalty
 
 
 def penalize_headway_variance(vehicles,
