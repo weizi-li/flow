@@ -165,7 +165,8 @@ class MultiGridAVsPOEnv(TrafficLightGridPOEnv, MultiEnv):
 
 
         # Feature set 3: edge inflow rate
-        # normalize flow rate by 1000 * number of (horizonal) lanes
+        # normalize flow rate by 1000 * number of horizontal lanes
+        # self.name_lanes denotes the number of horizontal lanes and is assigned in TrafficLightGridPOEnv
         env_obs = [self.flow_rate / 1000 / self.num_lanes]
 
 
