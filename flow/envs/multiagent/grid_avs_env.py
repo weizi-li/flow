@@ -12,7 +12,7 @@ from gym.spaces.box import Box
 
 from flow.core import rewards
 from flow.envs.traffic_light_grid import TrafficLightGridPOEnv
-from flow.envs.multiagent import MultiEnv
+from flow.envs.multiagent.base import MultiEnv
 
 MAX_LANES = 1
 
@@ -33,7 +33,7 @@ ADDITIONAL_RL_ENV_PARAMS = {
 
 
 class MultiGridAVsPOEnv(TrafficLightGridPOEnv, MultiEnv):
-    """Multiagent shared model version of PO_TrafficLightGridEnv.
+    """Multiagent shared model version of TrafficLightGridPOEnv.
 
     Required from env_params: See parent class
 
@@ -73,8 +73,6 @@ class MultiGridAVsPOEnv(TrafficLightGridPOEnv, MultiEnv):
         self.add_rl_if_exit = env_params.get_additional_param("add_rl_if_exit")
         self.num_rl = deepcopy(self.initial_vehicles.num_rl_vehicles)
         self.rl_id_list = deepcopy(self.initial_vehicles.get_rl_ids())
-
-	
         self.max_speed = self.k.network.max_speed()
 
         # list of controlled edges for comparison
@@ -90,12 +88,11 @@ class MultiGridAVsPOEnv(TrafficLightGridPOEnv, MultiEnv):
         """State space that is partially observed.
 
         Local observations:
-        - Observed vehicles on nearby lanes (velocity, distance to
-          intersection, RL or not)
-        - Local edge information (density, avg speed)
-        - Ego vehicle observations (speed, max speed, headway, tailway,
-          distance to intersection)
-        - Environment parameters (inflow rate)
+        - Feature set 1 -- each observed vehicle on nearby lanes: velocity, distance to
+          intersection, RL or not
+        - Feature set 2 -- local edge information: density, avg speed
+        - Feature set 3 -- ego vehicle: speed, max speed, headway, tailway, distance to intersection
+        - Feature set 3 -- environment parameters: inflow rate
         """
         # traffic_light_obs = 3 * (1 + self.num_local_lights) * \
         #                     self.traffic_lights
@@ -103,9 +100,9 @@ class MultiGridAVsPOEnv(TrafficLightGridPOEnv, MultiEnv):
         tl_box = Box(
             low=0.,
             high=1,
-            shape=(3 * self.num_local_edges * self.num_observed +
-                   2 * self.num_local_edges +
-                   6,
+            shape=(3 * self.num_local_edges * self.num_observed +  # for feature set 1
+                   2 * self.num_local_edges + # for feature set 2
+                   6, # for feature set 3
                    # traffic_light_obs,
                    ),
             dtype=np.float32)
@@ -127,27 +124,27 @@ class MultiGridAVsPOEnv(TrafficLightGridPOEnv, MultiEnv):
         """Observations for each traffic light agent.
 
         :return: dictionary which contains agent-wise observations as follows:
-        - For the self.num_observed number of vehicles closest and incoming
+        - For the #self.num_observed vehicles closest and incoming
         towards traffic light agent, gives the vehicle velocity, distance to
         intersection, edge_number, density traffic light state.
         - For edges in the network, gives the density and average velocity.
-        - For the self.num_local_lights number of nearest lights (itself
+        - For the #self.num_local_lights nearest lights (itself
         included), gives the traffic light information, including the last
-        change time, light direction (i.e. phase), and a currently_yellow flag.
+        change time, light direction (i.e., phase), and a currently_yellow flag.
         """
-        # normalize flow rate by 1000 * number of (horizonal) lanes
-        env_obs = [self.flow_rate / 1000 / self.num_lanes]
+
 
         # TODO(cathywu) CHANGE
         # Normalization factors
+        # get the highest speed limit among all edges
         max_speed = max(
             self.k.network.speed_limit(edge)
             for edge in self.k.network.get_edge_list())
         grid_array = self.net_params.additional_params["grid_array"]
-        max_dist = max(grid_array["short_length"], grid_array["long_length"],
-                       grid_array["inner_length"])
+        # get the highest lane length in this network
+        max_dist = max(grid_array["short_length"], grid_array["long_length"], grid_array["inner_length"])
 
-        # Edge information
+        # Feature set 2: local edge information
         density = []
         velocity_avg = []
         for edge in self.k.network.get_edge_list():
@@ -166,21 +163,25 @@ class MultiGridAVsPOEnv(TrafficLightGridPOEnv, MultiEnv):
         density = np.array(density)
         velocity_avg = np.array(velocity_avg)
 
+
+        # Feature set 3: edge inflow rate
+        # normalize flow rate by 1000 * number of (horizonal) lanes
+        env_obs = [self.flow_rate / 1000 / self.num_lanes]
+
+
         obs = {}
         all_observed_ids = []
         ego_edges = self.network.ego_edges
         for rl_id in self.k.vehicle.get_rl_ids():
-            # Ego vehicle information
+
+            # Feature set 3: ego vehicle information
             ego_speed = self.k.vehicle.get_speed(rl_id) / max_speed
             ego_max_speed = self.k.vehicle.get_max_speed(rl_id) / max_speed
-            ego_headway = min(self.k.vehicle.get_headway(rl_id),
-                              max_dist) / max_dist
+            ego_headway = min(self.k.vehicle.get_headway(rl_id), max_dist) / max_dist
             # map no tailway (-1000) to 1.0
-            ego_tailway = min(np.abs(self.k.vehicle.get_tailway(rl_id)),
-                              max_dist) / max_dist
-            ego_dist_to_intersec = (self.k.network.edge_length(
-                self.k.vehicle.get_edge(rl_id)) - self.k.vehicle.get_position(
-                rl_id)) / max_dist
+            ego_tailway = min(np.abs(self.k.vehicle.get_tailway(rl_id)), max_dist) / max_dist
+            ego_dist_to_intersec = (self.k.network.edge_length(self.k.vehicle.get_edge(rl_id))
+                                    - self.k.vehicle.get_position(rl_id)) / max_dist
             ego_obs = [ego_speed, ego_max_speed, ego_headway, ego_tailway,
                        ego_dist_to_intersec]
 
@@ -208,7 +209,7 @@ class MultiGridAVsPOEnv(TrafficLightGridPOEnv, MultiEnv):
                     # Invalid edge
                     local_edge_numbers.append(-1)
 
-            # Observed vehicle information
+            # Feature set 1: for each observed vehicle on nearby lanes
             local_speeds = []
             local_dists_to_intersec = []
             local_veh_types = []
@@ -236,11 +237,11 @@ class MultiGridAVsPOEnv(TrafficLightGridPOEnv, MultiEnv):
                     local_dists_to_intersec.extend([1] * diff)
                     local_veh_types.extend([0] * diff)
 
+            # Combine all 3 feature sets
             observation = np.array(np.concatenate(
                 [local_speeds, local_dists_to_intersec, local_veh_types,
                  density[local_edge_numbers], velocity_avg[local_edge_numbers],
                  ego_obs, env_obs]))
-
             obs.update({rl_id: observation})
 
         self.observed_ids = all_observed_ids
@@ -276,8 +277,10 @@ class MultiGridAVsPOEnv(TrafficLightGridPOEnv, MultiEnv):
             return {}
 
         # rew_delay = -rewards.min_delay_unscaled(self)
-        rew_delay = -0.01 * rewards.delay(self)
-        rew_still = rewards.penalize_standstill(self, gain=0.2, threshold=2.0)
+
+        #rew_delay = -0.01 * rewards.delay(self)
+        rew_delay = 0
+        rew_still = rewards.penalize_standstill(self, gain=0.2)
 
         rews = {}
         # FIXME(cathywu) check that rl_ids is consistent with actions
@@ -306,7 +309,7 @@ class MultiGridAVsPOEnv(TrafficLightGridPOEnv, MultiEnv):
         action space.
         """
         super().additional_command()
-        # if the number of rl vehicles has decreased introduce it back in
+        # if the number of RL vehicles has decreased, introduce them to the network again
         num_rl = self.k.vehicle.num_rl_vehicles
         outer_edges = []
         outer_edges += ["left{}_{}".format(self.rows, i) for i in
@@ -317,10 +320,10 @@ class MultiGridAVsPOEnv(TrafficLightGridPOEnv, MultiEnv):
             diff_list = list(
                 set(self.rl_id_list).difference(self.k.vehicle.get_rl_ids()))
             for rl_id in diff_list:
-                # distribute rl cars evenly over edges
+                # distribute RL cars evenly over edges
                 edge = outer_edges[self.rl_id_list.index(rl_id) % len(
                     outer_edges)]
-                # reintroduce it at the start of the network
+                # reintroduce them at the start of the network
                 try:
                     self.k.vehicle.add(
                         veh_id=rl_id,

@@ -32,11 +32,11 @@ class Env(gym.Env):
     a network to specify a configuration and controllers, perform simulation
     steps, and reset the simulation to an initial configuration.
 
-    Env is Serializable to allow for pickling and replaying of the policy.
+    Env is serializable to allow for picking and replaying of the policy.
 
     This class cannot be used as is: you must extend it to implement an
     action applicator method, and properties to define the MDP if you
-    choose to use it with an rl library (e.g. RLlib). This can be done by
+    choose to use it with an RL library (e.g., RLlib). This can be done by
     overloading the following functions in a child class:
 
     * action_space
@@ -85,7 +85,7 @@ class Env(gym.Env):
 
     initial_ids : list of str
         name of the vehicles that will originally available in the network at
-        the start of a rollout (i.e. after `env.reset()` is called). This also
+        the start of a rollout (i.e., after `env.reset()` is called). This also
         corresponds to `self.initial_state.keys()`.
     available_routes : dict
         the available_routes variable contains a dictionary of routes vehicles
@@ -360,7 +360,7 @@ class Env(gym.Env):
             self.k.simulation.simulation_step()
 
             # store new observations in the vehicles and traffic lights class
-            self.k.update(reset=False)
+            self.k.update(reset=False, time_counter=self.time_counter)
 
             # update the colors of vehicles
             if self.sim_params.render:
@@ -387,8 +387,8 @@ class Env(gym.Env):
 
         # test if the environment should terminate due to a collision or the
         # time horizon being met
-        done = (self.time_counter >= self.env_params.warmup_steps +
-                self.env_params.horizon)  # or crash
+        done = crash or (self.time_counter >= self.env_params.warmup_steps +
+                self.env_params.horizon)
 
         # compute the info for each agent
         infos = {}
@@ -457,7 +457,8 @@ class Env(gym.Env):
                 try:
                     self.k.vehicle.remove(veh_id)
                 except (FatalTraCIError, TraCIException):
-                    print(traceback.format_exc())
+                    pass
+                    #print(traceback.format_exc())
 
         # clear all vehicles from the network and the vehicles class
         # FIXME (ev, ak) this is weird and shouldn't be necessary
@@ -502,7 +503,7 @@ class Env(gym.Env):
         self.k.simulation.simulation_step()
 
         # update the information in each kernel to match the current state
-        self.k.update(reset=True)
+        self.k.update(reset=True, time_counter=self.time_counter)
 
         # update the colors of vehicles
         if self.sim_params.render:
@@ -567,14 +568,14 @@ class Env(gym.Env):
                 rl_actions,
                 a_min=self.action_space.low,
                 a_max=self.action_space.high)
-        elif isinstance(self.action_space, Tuple):
-            for idx, action in enumerate(rl_actions):
-                subspace = self.action_space[idx]
-                if isinstance(subspace, Box):
-                    rl_actions[idx] = np.clip(
-                        action,
-                        a_min=subspace.low,
-                        a_max=subspace.high)
+        # elif isinstance(self.action_space, Tuple):
+        #     for idx, action in enumerate(rl_actions):
+        #         subspace = self.action_space[idx]
+        #         if isinstance(subspace, Box):
+        #             rl_actions[idx] = np.clip(
+        #                 action,
+        #                 a_min=subspace.low,
+        #                 a_max=subspace.high)
         return rl_actions
 
     def apply_rl_actions(self, rl_actions=None):
@@ -670,9 +671,9 @@ class Env(gym.Env):
             # close pyglet renderer
             if self.sim_params.render in ['gray', 'dgray', 'rgb', 'drgb']:
                 self.renderer.close()
-        except FileNotFoundError:
-            # Skip automatic termination. Connection is probably already closed
-            print(traceback.format_exc())
+        except FileNotFoundError: # Skip automatic termination. Connection is probably already closed
+            pass
+            #print(traceback.format_exc())
 
     def render(self, reset=False, buffer_length=5):
         """Render a frame.
