@@ -109,8 +109,8 @@ class TraCIVehicle(KernelVehicle):
         The following actions are performed:
 
         * The state of all vehicles is modified to match their state at the
-          current time step. This includes states specified by sumo, and states
-          explicitly defined by flow, e.g. "num_arrived".
+          current time step. This includes states specified by SUMO, and states
+          explicitly defined by flow, e.g., "num_arrived".
         * If vehicles exit the network, they are removed from the vehicles
           class, and newly departed vehicles are introduced to the class.
 
@@ -143,7 +143,7 @@ class TraCIVehicle(KernelVehicle):
             if veh_id in self.get_ids() and vehicle_obs[veh_id] is not None:
                 # this occurs when a vehicle is actively being removed and
                 # placed again in the network to ensure a constant number of
-                # total vehicles (e.g. TrafficLightGridEnv). In this case, the vehicle
+                # total vehicles (e.g., TrafficLightGridEnv). In this case, the vehicle
                 # is already in the class; its state data just needs to be
                 # updated
                 pass
@@ -903,7 +903,7 @@ class TraCIVehicle(KernelVehicle):
 
     def apply_acceleration(self, veh_ids, acc):
         """See parent class."""
-        # to hand the case of a single vehicle
+        # to handle the case of a single vehicle
         if type(veh_ids) == str:
             veh_ids = [veh_ids]
             acc = [acc]
