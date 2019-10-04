@@ -42,7 +42,7 @@ class BaseKernelNetwork(object):
       overridden by the network generated from a flow.networks.Network object
       if the spacing in ``initial_config`` is set to random. Default initial
       positions include uniform starting positions (where all vehicles are
-      equally spacing) or random starting positions (limited by some min_gap).
+      equally spaced) or random starting positions (limited by some min_gap).
       For more details on how to augment the starting position of vehicles,
       see:  # TODO: create tutorial
     """
@@ -74,7 +74,7 @@ class BaseKernelNetwork(object):
         self.total_edgestarts_dict = None
 
     def generate_network(self, network):
-        """Generate the necessary prerequisites for the simulating a network.
+        """Generate the necessary prerequisites for simulating a network.
 
         Parameters
         ----------

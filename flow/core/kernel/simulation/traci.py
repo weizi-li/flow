@@ -18,7 +18,7 @@ RETRIES_ON_ERROR = 10
 
 
 class TraCISimulation(KernelSimulation):
-    """Sumo simulation kernel.
+    """SUMO simulation kernel.
 
     Extends flow.core.kernel.simulation.KernelSimulation
     """
@@ -33,6 +33,7 @@ class TraCISimulation(KernelSimulation):
             sub-kernels)
         """
         KernelSimulation.__init__(self, master_kernel)
+
         # contains the subprocess.Popen instance used to start traci
         self.sumo_proc = None
 

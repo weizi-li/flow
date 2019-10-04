@@ -40,7 +40,7 @@ class TraCIKernelNetwork(BaseKernelNetwork):
     """
 
     def __init__(self, master_kernel, sim_params):
-        """Instantiate a sumo network kernel.
+        """Instantiate a SUMO network kernel.
 
         Parameters
         ----------
@@ -156,7 +156,7 @@ class TraCIKernelNetwork(BaseKernelNetwork):
         self.__max_speed = max(
             self.speed_limit(edge) for edge in self.get_edge_list())
 
-        # length of the network, or the portion of the network in
+        # the length of the network, or the portion of the network in
         # which cars are meant to be distributed
         self.__length = sum(
             self.edge_length(edge_id) for edge_id in self.get_edge_list()
@@ -197,7 +197,7 @@ class TraCIKernelNetwork(BaseKernelNetwork):
         # specify routes vehicles can take  # TODO: move into a method
         self.rts = self.network.routes
 
-        # create the sumo configuration files
+        # create the SUMO configuration files
         cfg_name = self.generate_cfg(self.network.net_params,
                                      self.network.traffic_lights,
                                      self.network.routes)
