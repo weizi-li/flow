@@ -15,6 +15,7 @@ def desired_velocity(env, fail=False, edge_list=None):
     to collisions or other failures, the function is formulated as a mapping
     :math:`r: \\mathcal{S} \\times \\mathcal{A}
     \\rightarrow \\mathbb{R}_{\\geq 0}`.
+
     This is done by subtracting the deviation of the system from the
     desired velocity from the peak allowable deviation from the desired
     velocity. Additionally, since the velocity of vehicles are
@@ -286,7 +287,7 @@ def penalize_headway_variance(vehicles,
                               normalization=1,
                               penalty_gain=1,
                               penalty_exponent=1):
-    """Reward function used to train rl vehicles to encourage large headways.
+    """Reward function used to train RL vehicles to encourage large headways.
 
     Parameters
     ----------

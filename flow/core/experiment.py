@@ -112,22 +112,30 @@ class Experiment:
         outflows = []
         inflows = []
 
-
+        # for each run
         for i in range(num_runs):
             vel = np.zeros(num_steps)
             logging.info("Iter #" + str(i))
             ret = 0
             ret_list = []
             state = self.env.reset()
+
+            # for each step
             for j in range(num_steps):
+
+                # get the states, rewards, etc.
                 state, reward, done, _ = self.env.step(rl_actions(state))
-                vel[j] = np.mean(
-                    self.env.k.vehicle.get_speed(self.env.k.vehicle.get_ids()))
+
+                # get speeds at all simulation steps
+                vel[j] = np.mean(self.env.k.vehicle.get_speed(self.env.k.vehicle.get_ids()))
+
+                # compute the return as cumulative reward for all simulation steps
                 ret += reward
                 ret_list.append(reward)
 
                 if done:
                     break
+
             rets.append(ret)
             vels.append(vel)
             mean_rets.append(np.mean(ret_list))
@@ -148,7 +156,6 @@ class Experiment:
             else:
                 throughput = [0] * len(inflows)
             ######################
-
 
         info_dict["returns"] = rets
         info_dict["velocities"] = vels
@@ -181,8 +188,7 @@ class Experiment:
 
             # collect the location of the emission file
             dir_path = self.env.sim_params.emission_path
-            emission_filename = \
-                "{0}-emission.xml".format(self.env.network.name)
+            emission_filename = "{0}-emission.xml".format(self.env.network.name)
             emission_path = os.path.join(dir_path, emission_filename)
 
             # convert the emission file into a csv

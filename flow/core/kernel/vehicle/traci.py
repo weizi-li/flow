@@ -48,7 +48,8 @@ class TraCIVehicle(KernelVehicle):
 
         # total number of vehicles in the network
         self.num_vehicles = 0
-        # number of rl vehicles in the network
+
+        # number of RL vehicles in the network
         self.num_rl_vehicles = 0
 
         # contains the parameters associated with each type of vehicle
@@ -114,7 +115,7 @@ class TraCIVehicle(KernelVehicle):
 
         * The state of all vehicles is modified to match their state at the
           current time step. This includes states specified by SUMO, and states
-          explicitly defined by flow, e.g., "num_arrived".
+          explicitly defined by Flow, e.g., "num_arrived".
         * If vehicles exit the network, they are removed from the vehicles
           class, and newly departed vehicles are introduced to the class.
         """
@@ -202,8 +203,7 @@ class TraCIVehicle(KernelVehicle):
                 _angle = vehicle_obs.get(veh_id, {}).get(tc.VAR_ANGLE, -1001)
                 _time_step = sim_obs[tc.VAR_TIME_STEP]
                 _time_delta = sim_obs[tc.VAR_DELTA_T]
-                self.__vehicles[veh_id]["orientation"] = \
-                    list(_position) + [_angle]
+                self.__vehicles[veh_id]["orientation"] = list(_position) + [_angle]
                 self.__vehicles[veh_id]["timestep"] = _time_step
                 self.__vehicles[veh_id]["timedelta"] = _time_delta
             except TypeError:
@@ -225,13 +225,13 @@ class TraCIVehicle(KernelVehicle):
                 except KeyError as e:
                     print('Error:', e)
 
-        # update the sumo observations variable
+        # update the SUMO observations variable
         self.__sumo_obs = vehicle_obs.copy()
 
         # update the lane leaders data for each vehicle
         self._multi_lane_headways()
 
-        # make sure the rl vehicle list is still sorted
+        # make sure the RL vehicle list is still sorted
         self.__rl_ids.sort()
 
     def _add_departed(self, veh_id, veh_type, time_counter=None):
