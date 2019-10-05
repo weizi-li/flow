@@ -16,7 +16,7 @@ def make_create_env(params, version=0, render=None):
     This environment creation method allows for the specification of several
     key parameters when creating any flow environment, including the requested
     environment and network classes, and the inputs needed to make these
-    classes generalizable to networks of varying sizes and shapes, and well as
+    classes generalizable to networks of varying sizes and shapes, as well as
     varying forms of control (e.g., AVs, traffic lights, etc.).
 
     This method can also be used to recreate the environment that a policy was
