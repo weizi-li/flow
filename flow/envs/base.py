@@ -18,7 +18,6 @@ from traci.exceptions import TraCIException
 
 import sumolib
 
-
 from flow.core.util import ensure_dir
 from flow.core.kernel import Kernel
 from flow.utils.exceptions import FatalFlowError
@@ -262,13 +261,13 @@ class Env(gym.Env):
 
         This information is to be used upon reset. This method also adds this
         information to the self.vehicles class and starts a subscription with
-        sumo to collect state information each step.
+        SUMO to collect state information each step.
         """
         # determine whether to shuffle the vehicles
         if self.initial_config.shuffle:
             random.shuffle(self.initial_ids)
 
-        # generate starting position for vehicles in the network
+        # generate starting positions for vehicles in the network
         start_pos, start_lanes = self.k.network.generate_starting_positions(
             initial_config=self.initial_config,
             num_vehicles=len(self.initial_ids))
@@ -286,7 +285,7 @@ class Env(gym.Env):
     def step(self, rl_actions):
         """Advance the environment by one step.
 
-        Assigns actions to autonomous and human-driven agents (i.e. vehicles,
+        Assigns actions to autonomous and human-driven agents (i.e., vehicles,
         traffic lights, etc...). Actions that are not assigned are left to the
         control of the simulator. The actions are then used to advance the
         simulator by the number of time steps requested per environment step.
@@ -300,7 +299,7 @@ class Env(gym.Env):
         Parameters
         ----------
         rl_actions : array_like
-            an list of actions provided by the rl algorithm
+            an list of actions provided by the RL algorithm
 
         Returns
         -------
@@ -321,8 +320,7 @@ class Env(gym.Env):
             if len(self.k.vehicle.get_controlled_ids()) > 0:
                 accel = []
                 for veh_id in self.k.vehicle.get_controlled_ids():
-                    action = self.k.vehicle.get_acc_controller(
-                        veh_id).get_action(self)
+                    action = self.k.vehicle.get_acc_controller(veh_id).get_action(self)
                     accel.append(action)
                 self.k.vehicle.apply_acceleration(
                     self.k.vehicle.get_controlled_ids(), accel)
@@ -331,8 +329,7 @@ class Env(gym.Env):
             if len(self.k.vehicle.get_controlled_lc_ids()) > 0:
                 direction = []
                 for veh_id in self.k.vehicle.get_controlled_lc_ids():
-                    target_lane = self.k.vehicle.get_lane_changing_controller(
-                        veh_id).get_action(self)
+                    target_lane = self.k.vehicle.get_lane_changing_controller(veh_id).get_action(self)
                     direction.append(target_lane)
                 self.k.vehicle.apply_lane_change(
                     self.k.vehicle.get_controlled_lc_ids(),
