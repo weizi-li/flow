@@ -32,11 +32,11 @@ class Env(gym.Env):
     a network to specify a configuration and controllers, perform simulation
     steps, and reset the simulation to an initial configuration.
 
-    Env is Serializable to allow for pickling and replaying of the policy.
+    Env is serializable to allow for picking and replaying of the policy.
 
     This class cannot be used as is: you must extend it to implement an
     action applicator method, and properties to define the MDP if you
-    choose to use it with an rl library (e.g. RLlib). This can be done by
+    choose to use it with an RL library (e.g., RLlib). This can be done by
     overloading the following functions in a child class:
 
     * action_space
@@ -294,8 +294,7 @@ class Env(gym.Env):
         Results from the simulations are processed through various classes,
         such as the Vehicle and TrafficLight kernels, to produce standardized
         methods for identifying specific network state features. Finally,
-        results from the simulator are used to generate appropriate
-        observations.
+        results from the simulator are used to generate appropriate observations.
 
         Parameters
         ----------
@@ -343,12 +342,11 @@ class Env(gym.Env):
             routing_ids = []
             routing_actions = []
             for veh_id in self.k.vehicle.get_ids():
-                if self.k.vehicle.get_routing_controller(veh_id) \
-                        is not None:
+                if self.k.vehicle.get_routing_controller(veh_id) is not None:
                     routing_ids.append(veh_id)
-                    route_contr = self.k.vehicle.get_routing_controller(
+                    route_ctrl = self.k.vehicle.get_routing_controller(
                         veh_id)
-                    routing_actions.append(route_contr.choose_route(self))
+                    routing_actions.append(route_ctrl.choose_route(self))
 
             self.k.vehicle.choose_routes(routing_ids, routing_actions)
 
@@ -578,7 +576,7 @@ class Env(gym.Env):
         return rl_actions
 
     def apply_rl_actions(self, rl_actions=None):
-        """Specify the actions to be performed by the rl agent(s).
+        """Specify the actions to be performed by the RL agent(s).
 
         If no actions are provided at any given step, the rl agents default to
         performing actions specified by SUMO.

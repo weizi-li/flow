@@ -112,7 +112,6 @@ class Experiment:
         outflows = []
         inflows = []
 
-
         for i in range(num_runs):
             vel = np.zeros(num_steps)
             logging.info("Iter #" + str(i))
