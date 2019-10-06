@@ -1,11 +1,11 @@
 """Script containing the Flow kernel object for interacting with simulators."""
 
 import warnings
-from flow.core.kernel.simulation import TraCISimulation, AimsunKernelSimulation
-from flow.core.kernel.network import TraCIKernelNetwork, AimsunKernelNetwork
-from flow.core.kernel.vehicle import TraCIVehicle, AimsunKernelVehicle
-from flow.core.kernel.traffic_light import TraCITrafficLight, \
-    AimsunKernelTrafficLight
+
+from flow.core.kernel.sim_control import TraCISimControl
+from flow.core.kernel.simulation import TraCISimulation
+from flow.core.kernel.vehicle import TraCIVehicle
+from flow.core.kernel.traffic_light import TraCITrafficLight
 from flow.utils.exceptions import FatalFlowError
 
 
@@ -13,13 +13,13 @@ class Kernel(object):
     """Kernel for abstract function calling across traffic simulator APIs.
 
     The kernel contains four different subclasses for distinguishing between
-    the various components of a traffic simulator.
+    the various components of a traffic simulation.
 
-    * simulation: controls starting, loading, saving, advancing, and resetting
+    * sim_control: controls starting, loading, saving, advancing, and resetting
       a simulation in Flow (see flow/core/kernel/simulation/base.py)
 
-    * network: stores network-specific information (see
-      flow/core/kernel/network/base.py)
+    * simulation: stores simulation-specific information (see
+      flow/core/kernel/simulation/base.py)
 
     * vehicle: stores and regularly updates vehicle-specific information. At
       times, this class is optimized to efficiently collect information from
@@ -28,9 +28,9 @@ class Kernel(object):
     * traffic_light: stores and regularly updates traffic light-specific
       information (see flow/core/kernel/traffic_light/base.py).
 
-    The above kernel subclasses are designed specifically to support
-    simulator-agnostic state information calling. For example, if you would
-    like to collect the vehicle speed of a specific vehicle, then simply type:
+    The above kernel subclasses are designed to support simulator-agnostic 
+    state information calling. For example, if you would like to collect 
+    the vehicle speed of a specific vehicle, then simply do:
 
     >>> k = Kernel(simulator="...")  # a kernel for some simulator type
     >>> veh_id = "..."  # some vehicle ID
@@ -38,25 +38,25 @@ class Kernel(object):
 
     In addition, these subclasses support sending commands to the simulator via
     its API. For example, in order to assign a specific vehicle a target
-    acceleration, type:
+    acceleration, simply do:
 
     >>> k = Kernel(simulator="...")  # a kernel for some simulator type
     >>> veh_id = "..."  # some vehicle ID
     >>> k.vehicle.apply_acceleration(veh_id)
 
     These subclasses can be modified and recycled to support various different
-    traffic simulators, e.g., SUMO, AIMSUN, TruckSim, etc...
+    traffic simulators.
     """
 
-    def __init__(self, simulator, sim_params):
+    def __init__(self, sim_interface, sim_addl_params):
         """Instantiate a Flow kernel object.
 
         Parameters
         ----------
-        simulator : str
-            simulator type, must be one of {"traci"}
-        sim_params : flow.core.params.SimParams
-            simulation-specific parameters
+        sim_interface : str
+            simulator interface, currently only support "traci"
+        sim_addl_params : flow.core.params.SimAddlParams
+            additional simulation-specific parameters
 
         Raises
         ------
@@ -65,25 +65,20 @@ class Kernel(object):
         """
         self.kernel_api = None
 
-        if simulator == "traci":
-            self.simulation = TraCISimulation(self)
-            self.network = TraCIKernelNetwork(self, sim_params)
-            self.vehicle = TraCIVehicle(self, sim_params)
+        if sim_interface == "traci":
+            self.sim_control = TraCISimControl(self)
+            self.simulation = TraCINetwork(self, sim_addl_params)
+            self.vehicle = TraCIVehicle(self, sim_addl_params)
             self.traffic_light = TraCITrafficLight(self)
-        elif simulator == 'aimsun':
-            self.simulation = AimsunKernelSimulation(self)
-            self.network = AimsunKernelNetwork(self, sim_params)
-            self.vehicle = AimsunKernelVehicle(self, sim_params)
-            self.traffic_light = AimsunKernelTrafficLight(self)
         else:
             raise FatalFlowError('Simulator type "{}" is not valid.'.
-                                 format(simulator))
+                                 format(sim_interface))
 
     def pass_api(self, kernel_api):
         """Pass the kernel API to all kernel subclasses."""
         self.kernel_api = kernel_api
+        self.sim_control.pass_api(kernel_api)
         self.simulation.pass_api(kernel_api)
-        self.network.pass_api(kernel_api)
         self.vehicle.pass_api(kernel_api)
         self.traffic_light.pass_api(kernel_api)
 
@@ -93,7 +88,7 @@ class Kernel(object):
         This is meant to support optimizations in the performance of some
         simulators. For example, this step allows the vehicle subclass in the
         "traci" simulator uses the ``update`` method to collect and store
-        subscription information.
+        subscribed information.
 
         Parameters
         ----------
@@ -103,21 +98,12 @@ class Kernel(object):
         """
         self.vehicle.update(reset)
         self.traffic_light.update(reset)
-        self.network.update(reset)
         self.simulation.update(reset)
+        self.sim_control.update(reset)
 
     def close(self):
-        """Terminate all components within the simulation and network."""
-        self.network.close()
+        """Terminate all components within the simulation."""
         self.simulation.close()
+        self.sim_control.close()
 
-    @property
-    def scenario(self):
-        """Return network for this deprecated method."""
-        warnings.simplefilter('always', PendingDeprecationWarning)
-        warnings.warn(
-            "self.k.scenario will be deprecated in a future release. Please "
-            "use self.k.network instead.",
-            PendingDeprecationWarning
-        )
-        return self.network
+

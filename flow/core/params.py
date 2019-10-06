@@ -25,6 +25,19 @@ MAX_GAP = 3.0
 DETECTOR_GAP = 0.6
 SHOW_DETECTORS = True
 
+# Used in loading vehicle types from a *.add.xml file in simulation/base.py
+# default SUMO probability value  TODO (ak): remove
+DEFAULT_PROBABILITY = 0
+# default SUMO vehicle length (in meters) TODO (ak): remove
+DEFAULT_VEH_LENGTH = 5
+# default SUMO vehicle class TODO (ak): remove
+DEFAULT_VEH_CLASS = 0
+
+# colors for vehicles
+WHITE = (255, 255, 255)
+CYAN = (0, 255, 255)
+RED = (255, 0, 0)
+
 
 class TrafficLightParams:
     """Base traffic light.
@@ -410,92 +423,9 @@ class SimParams(object):
         self.color_vehicles = color_vehicles
 
 
-class AimsunParams(SimParams):
-    """Aimsun-specific simulation parameters.
-
-    Extends SimParams.
-
-    Attributes
-    ----------
-    sim_step : float optional
-        seconds per simulation step; 0.1 by default
-    render : str or bool, optional
-        specifies whether to visualize the rollout(s)
-
-        * False: no rendering
-        * True: delegate rendering to sumo-gui for back-compatibility
-        * "gray": static grayscale rendering, which is good for training
-        * "dgray": dynamic grayscale rendering
-        * "rgb": static RGB rendering
-        * "drgb": dynamic RGB rendering, which is good for visualization
-
-    restart_instance : bool, optional
-        specifies whether to restart a simulation upon reset. Restarting
-        the instance helps avoid slowdowns cause by excessive inflows over
-        large experiment runtimes, but also require the gui to be started
-        after every reset if "render" is set to True.
-    emission_path : str, optional
-        Path to the folder in which to create the emissions output.
-        Emissions output is not generated if this value is not specified
-    save_render : bool, optional
-        specifies whether to save rendering data to disk
-    sight_radius : int, optional
-        sets the radius of observation for RL vehicles (meter)
-    show_radius : bool, optional
-        specifies whether to render the radius of RL observation
-    pxpm : int, optional
-        specifies rendering resolution (pixel / meter)
-    scenario_name : str, optional
-        name of the network generated in Aimsun.
-    experiment_name : str, optional
-        name of the experiment generated in Aimsun
-    replication_name : str, optional
-        name of the replication generated in Aimsun. When loading
-        an Aimsun template, this parameter must be set to the name
-        of the replication to be run by the simulation; in this case,
-        the scenario_name and experiment_name parameters are not
-        necessary as they will be obtained from the replication name.
-    centroid_config_name : str, optional
-        name of the centroid configuration to load in Aimsun. This
-        parameter is only used when loading an Aimsun template,
-        not when generating one.
-    subnetwork_name : str, optional
-        name of the subnetwork to load in Aimsun. This parameter is not
-        used when generating a network; it can be used when loading an
-        Aimsun template containing a subnetwork in order to only load
-        the objects contained in this subnetwork. If set to None or if the
-        specified subnetwork does not exist, the whole network will be loaded.
-    """
-
-    def __init__(self,
-                 sim_step=0.1,
-                 render=False,
-                 restart_instance=False,
-                 emission_path=None,
-                 save_render=False,
-                 sight_radius=25,
-                 show_radius=False,
-                 pxpm=2,
-                 # set to match Flow_Aimsun.ang's scenario name
-                 scenario_name="Dynamic Scenario 866",
-                 # set to match Flow_Aimsun.ang's experiment name
-                 experiment_name="Micro SRC Experiment 867",
-                 # set to match Flow_Aimsun.ang's replication name
-                 replication_name="Replication 870",
-                 centroid_config_name=None,
-                 subnetwork_name=None):
-        """Instantiate AimsunParams."""
-        super(AimsunParams, self).__init__(
-            sim_step, render, restart_instance, emission_path, save_render,
-            sight_radius, show_radius, pxpm)
-        self.scenario_name = scenario_name
-        self.experiment_name = experiment_name
-        self.replication_name = replication_name
-        self.centroid_config_name = centroid_config_name
-        self.subnetwork_name = subnetwork_name
 
 
-class SumoParams(SimParams):
+class SimParams:
     """SUMO-specific simulation parameters.
 
     Extends SimParams.
@@ -683,12 +613,12 @@ class NetParams:
         self.additional_params = additional_params or {}
 
 
-class InitialConfig:
-    """Initial configuration parameters.
+class InitialVelConfig:
+    """Vehicles initial position configuration.
 
-    These parameters that affect the positioning of vehicle in the
-    network at the start of a rollout. By default, vehicles are uniformly
-    distributed in the network.
+    These parameters affect the positioning of vehicles in the
+    simulation at the start of a rollout. By default, vehicles are uniformly
+    distributed on the network.
 
     Attributes
     ----------
@@ -736,7 +666,7 @@ class InitialConfig:
                  lanes_distribution=float("inf"),
                  edges_distribution="all",
                  additional_params=None):
-        """Instantiate InitialConfig.
+        """Instantiate InitialVelConfig.
 
         These parameters that affect the positioning of vehicle in the
         network at the start of a rollout. By default, vehicles are uniformly
