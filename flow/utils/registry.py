@@ -58,13 +58,10 @@ def make_create_env(params, version=0, render=None):
         name of the created gym environment
     """
     exp_tag = params["exp_tag"]
-
     env_name = params["env_name"] + '-v{}'.format(version)
 
     module = __import__("flow.networks", fromlist=[params["network"]])
     network_class = getattr(module, params["network"])
-    #module = __import__("flow.scenarios", fromlist=[params["scenario"]])
-    #network_class = getattr(module, params["scenario"])
 
     env_params = params['env']
     net_params = params['net']

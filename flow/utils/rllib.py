@@ -149,11 +149,11 @@ def get_flow_params(config):
     if "tls" in flow_params:
         tls.__dict__ = flow_params["tls"].copy()
 
-    flow_params["sim"] = sim
-    flow_params["env"] = env
-    flow_params["initial"] = initial
-    flow_params["net"] = net
     flow_params["veh"] = veh
+    flow_params["sim"] = sim
+    flow_params["net"] = net
+    flow_params["initial"] = initial
+    flow_params["env"] = env
     flow_params["tls"] = tls
 
     return flow_params
