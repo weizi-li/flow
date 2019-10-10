@@ -224,9 +224,6 @@ def visualizer_rllib(args):
         for _ in range(env_params.horizon):
             vehicles = env.unwrapped.k.vehicle
 
-            print("asdfasdf")
-            print(vehicles.get_ids())
-
             vel.append(np.mean(vehicles.get_speed(vehicles.get_ids())))
             if multiagent:
                 action = {}
