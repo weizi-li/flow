@@ -1,6 +1,5 @@
 """Grid with AVs example."""
 
-import sys
 import json
 import argparse
 
@@ -9,10 +8,8 @@ try:
     from ray.rllib.agents.agent import get_agent_class
 except ImportError:
     from ray.rllib.agents.registry import get_agent_class
-
 from ray.rllib.agents.ppo.ppo_policy_graph import PPOPolicyGraph
 from ray import tune
-
 from ray.tune.registry import register_env
 from ray.tune import run_experiments
 
@@ -24,9 +21,6 @@ from flow.controllers import SimCarFollowingController, GridRouter
 from flow.utils.registry import make_create_env
 from flow.utils.rllib import FlowParamsEncoder
 
-
-
-SPEED_LIMIT = 35
 
 def setup_exps_PPO(flow_params, n_rollouts, n_cpus, horizon):
     """
@@ -94,7 +88,6 @@ if __name__ == '__main__':
     example usage:
         python multiagent_traffic_light_grid_avs.py --upload_dir=<S3 bucket>
     """
-
     """
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -104,9 +97,6 @@ if __name__ == '__main__':
     # required input parameters
     parser.add_argument("--upload_dir", type=str,
                         help="S3 Bucket for uploading results.")
-    upload_dir = args.upload_dir
-    if upload_dir:
-        exp_tag["upload_dir"] = "s3://{}".format(upload_dir)
 
     # optional input parameters
     parser.add_argument('--run_mode', type=str, default='local',
@@ -122,55 +112,47 @@ if __name__ == '__main__':
     args = parser.parse_args()
     """
 
-    #########################
-    ## Experiment parameters
-    #########################
-    RUN_MODE = 'local'
-    TRAINING_ITER = 2001
-    CHECKPOINT_FREQ = 1
-    EDGE_INFLOW = 802 # must <= 1000, which number is used to normalize the observation of inflow rate in env/multiagent/grid_avs_env.py
-    HORIZON = 400
-    if RUN_MODE == 'local':
-        N_CPUS = 3
-    elif RUN_MODE == 'cluster':
-        N_CPUS = int(sys.argv[1]) - 1
-    #########################
 
-        
-    N_ROLLOUTS = 64 # number of rollouts per training iteration
+    # Experiment parameters
+    RUN_MODE = 'local'
+    TRAINING_ITER = 1
+    CHECKPOINT_FREQ = 1
+    EDGE_INFLOW = 610  # inflow rate of vehicles at every edge
+    HORIZON = 400  # time horizon of a single rollout
+    AV_FRAC = 0.50  # fraction of AV vs human vehicles (for inflows)
+    if RUN_MODE == 'local':
+        N_CPUS = 1  # number of parallel workers
+    elif RUN_MODE == 'cluster':
+        N_CPUS = int(sys.argv[1]) - 1  # number of parallel workers
+
 
     # Environment parameters
+    N_ROLLOUTS = N_CPUS
     V_ENTER = 30  # enter speed for departing vehicles
     N_ROWS = 1  # number of row of bidirectional lanes
     N_COLUMNS = 1  # number of columns of bidirectional lanes
     INNER_LENGTH = 300  # length of inner edges in the grid network
     LONG_LENGTH = 100  # length of final edge in route
     SHORT_LENGTH = 300  # length of edges that vehicles start on
-    AV_FRAC = 0.50  # fraction of AV vs human vehicles (for inflows)
 
     # Instead of adding vehicles, we add the types of inflow vehicles. For
     # human vehicles, we use a "right_of_way" speed mode to support traffic
     # light compliance.
     vehicles = VehicleParams()
-    vehicles.add(
+    vehicles.add_type(
         veh_id="human",
         acceleration_controller=(SimCarFollowingController, {}),
         car_following_params=SumoCarFollowingParams(
-            min_gap=2,
+            min_gap=2.5,
             max_speed=V_ENTER,
-            accel=3.5,
-            decel=5,
-            #decel=7.5,  # avoid collisions at emergency stops
+            decel=7.5,  # avoid collisions at emergency stops
             speed_mode="right_of_way",
         ),
         routing_controller=(GridRouter, {}))
-    vehicles.add(
+    vehicles.add_type(
         veh_id="followerstopper",
         acceleration_controller=(RLController, {}),
         car_following_params=SumoCarFollowingParams(
-            min_gap=2,
-            accel=3.5,
-            decel=5,
             speed_mode=9,
         ),
         routing_controller=(GridRouter, {})
@@ -190,14 +172,14 @@ if __name__ == '__main__':
             veh_type="human",
             edge=edge,
             vehs_per_hour=EDGE_INFLOW * (1-AV_FRAC),
-            depart_lane="free",
-            depart_speed=V_ENTER)
+            departLane="free",
+            departSpeed=V_ENTER)
         inflow.add(
             veh_type="followerstopper",
             edge=edge,
             vehs_per_hour=EDGE_INFLOW * AV_FRAC,
-            depart_lane="free",
-            depart_speed=V_ENTER)
+            departLane="free",
+            departSpeed=V_ENTER)
 
     flow_params = dict(
         # name of the experiment
@@ -207,8 +189,8 @@ if __name__ == '__main__':
         # name of the flow environment the experiment is running on
         env_name='MultiGridAVsPOEnv',
 
-        # name of the network class the experiment is running on
-        network="TrafficLightGridNetwork",
+        # name of the scenario class the experiment is running on
+        scenario="SimpleGridScenario",
 
         # simulator that is used by the experiment
         simulator='traci',
@@ -224,28 +206,29 @@ if __name__ == '__main__':
         env=EnvParams(
             horizon=HORIZON,
             additional_params={
-                "target_velocity": SPEED_LIMIT, # used to be 50
+                "target_velocity": 50,
                 "switch_time": 3,
                 "num_observed": 2,
                 "discrete": False,
                 "tl_type": "actuated",
-                "max_accel": 3.5, # used to be 3
-                "max_decel": 5, # used to be 3
+                "max_accel": 3,
+                "max_decel": 3,
                 "add_rl_if_exit": True,
                 "reset_inflow": True,
                 "inflow_base": EDGE_INFLOW,
-                "inflow_delta": 20,
+                "inflow_delta": 25,
                 "fraction_av": AV_FRAC,
                 "speed_enter": V_ENTER,
             },
         ),
 
         # network-related parameters (see flow.core.params.NetParams and the
-        # network's documentation or ADDITIONAL_NET_PARAMS component)
+        # scenario's documentation or ADDITIONAL_NET_PARAMS component)
         net=NetParams(
             inflows=inflow,
-            #no_internal_links=False,
+            no_internal_links=False,
             additional_params={
+                "speed_limit": V_ENTER + 5,  # inherited from grid0 benchmark
                 "grid_array": {
                     "short_length": SHORT_LENGTH,
                     "inner_length": INNER_LENGTH,
@@ -260,8 +243,6 @@ if __name__ == '__main__':
                 "horizontal_lanes": 1,
                 "vertical_lanes": 1,
                 "traffic_lights": False,
-                "speed_limit": SPEED_LIMIT,
-                # hardcoded in env/multiagent/grid_avs_env.py; inherited from grid0 benchmark
             },
         ),
 
@@ -271,23 +252,29 @@ if __name__ == '__main__':
 
         # parameters specifying the positioning of vehicles upon initialization
         # or reset (see flow.core.params.InitialConfig)
-        initial=InitialConfig(spacing='random'),
+        initial=InitialConfig(
+            spacing='custom',
+            shuffle=True,
+        ),
     )
 
+    #upload_dir = args.upload_dir
+    #ALGO = args.algo
     ALGO = 'PPO'
     if ALGO == 'PPO':
-        alg_run, env_name, config = setup_exps_PPO(flow_params, N_ROLLOUTS, N_CPUS, HORIZON)
+        alg_run, env_name, config = setup_exps_PPO(flow_params, N_ROLLOUTS,
+                                                   N_CPUS, HORIZON)
 
     if RUN_MODE == 'local':
         ray.init(num_cpus=N_CPUS + 1)
     elif RUN_MODE == 'cluster':
         #ray.init(redis_address="localhost:6379")
-        ray.init(num_cpus=N_CPUS+1, redirect_output=False)
+        ray.init(num_cpus=N_CPUS + 1, redirect_output=False)
 
     exp_tag = {
         'run': alg_run,
         'env': env_name,
-        #"restore": "/home/weizili/ray_results/grid_av_0_1x1_i800_multiagent/PPO_MultiGridAVsPOEnv-v0_0_lr\=1e-05_2019-10-08_13-05-48abrzb1gi/checkpoint_2000/checkpoint-2000",
+        #"restore": "/home/gridsan/weizili/ray_results/grid_av_0_1x1_i800_multiagent/PPO_MultiGridAVsPOEnv-v0_0_lr=1e-05_2019-09-03_18-26-116mevavll/checkpoint_2000/checkpoint-2000",
         'checkpoint_freq': CHECKPOINT_FREQ,
         "max_failures": 10,
         'stop': {
@@ -297,7 +284,8 @@ if __name__ == '__main__':
         "num_samples": 1,
     }
 
-
+    #if upload_dir:
+    #    exp_tag["upload_dir"] = "s3://{}".format(upload_dir)
 
     run_experiments(
         {
