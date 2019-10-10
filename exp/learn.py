@@ -128,7 +128,7 @@ if __name__ == '__main__':
     RUN_MODE = 'local'
     TRAINING_ITER = 2001
     CHECKPOINT_FREQ = 1
-    EDGE_INFLOW = 802 # must <= 1000, which number is used to normalize the observation of inflow rate in env/multiagent/grid_avs_env.py
+    EDGE_INFLOW = 803 # must <= 1000, which number is used to normalize the observation of inflow rate in env/multiagent/grid_avs_env.py
     HORIZON = 400
     if RUN_MODE == 'local':
         N_CPUS = 3
