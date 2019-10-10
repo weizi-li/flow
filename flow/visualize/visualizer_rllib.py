@@ -122,7 +122,7 @@ def visualizer_rllib(args):
         sim_params.render = 'drgb'
         sim_params.pxpm = 4
     elif args.render_mode == 'sumo_gui':
-        sim_params.render = False
+        sim_params.render = True
         print('NOTE: With render mode {}, an extra instance of the SUMO GUI '
               'will display before the GUI for visualizing the result. Click '
               'the green Play arrow to continue.'.format(args.render_mode))
