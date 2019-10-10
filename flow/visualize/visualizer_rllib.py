@@ -57,12 +57,12 @@ def visualizer_rllib(args):
 
     config = get_rllib_config(result_dir)
     # TODO(ev) backwards compatibility hack
-    try:
-        pkl = get_rllib_pkl(result_dir)
-    except Exception:
-        pass
+    # try:
+    #     pkl = get_rllib_pkl(result_dir)
+    # except Exception:
+    #     pass
 
-
+    pkl = get_rllib_pkl(result_dir)
     # check if we have a multiagent environment but in a
     # backwards compatible way
     if config.get('multiagent', {}).get('policy_graphs', {}):
