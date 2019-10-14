@@ -129,8 +129,7 @@ class TrafficLightGridNetwork(Network):
         # retrieve all additional parameters
         # refer to the ADDITIONAL_NET_PARAMS dict for more documentation
         self.vertical_lanes = net_params.additional_params["vertical_lanes"]
-        self.horizontal_lanes = net_params.additional_params[
-            "horizontal_lanes"]
+        self.horizontal_lanes = net_params.additional_params["horizontal_lanes"]
         self.speed_limit = net_params.additional_params["speed_limit"]
         if not isinstance(self.speed_limit, dict):
             self.speed_limit = {
