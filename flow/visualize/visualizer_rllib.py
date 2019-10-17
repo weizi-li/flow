@@ -57,12 +57,12 @@ def visualizer_rllib(args):
 
     config = get_rllib_config(result_dir)
     # TODO(ev) backwards compatibility hack
-    # try:
-    #     pkl = get_rllib_pkl(result_dir)
-    # except Exception:
-    #     pass
+    try:
+        pkl = get_rllib_pkl(result_dir)
+    except Exception:
+        pass
 
-    pkl = get_rllib_pkl(result_dir)
+
     # check if we have a multiagent environment but in a
     # backwards compatible way
     if config.get('multiagent', {}).get('policy_graphs', {}):
@@ -107,12 +107,17 @@ def visualizer_rllib(args):
     sim_params.restart_instance = True
 
     # specify emission file path
-    if args.gen_emission:
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        emission_path = '{0}/test_time_rollout/'.format(dir_path)
-        sim_params.emission_path = emission_path
-    else:
-        sim_params.emission_path = None
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+
+    emission_path = '{0}/test_time_rollout/'.format(dir_path)
+    sim_params.emission_path = emission_path if args.gen_emission else None
+
+    # if args.gen_emission:
+    #     dir_path = os.path.dirname(os.path.realpath(__file__))
+    #     emission_path = '{0}/test_time_rollout/'.format(dir_path)
+    #     sim_params.emission_path = emission_path
+    # else:
+    #     sim_params.emission_path = None
 
     # pick your rendering mode
     if args.render_mode == 'sumo_web3d':
@@ -273,10 +278,8 @@ def visualizer_rllib(args):
         else:
             print('Round {}, Return: {}'.format(i, ret))
 
-    # terminate the environment
-    env.unwrapped.terminate()
 
-    '''
+
     print('==== Summary of results ====')
     print("Return:")
     print(mean_speed)
@@ -316,6 +319,9 @@ def visualizer_rllib(args):
     print('Average, std: {}, {}'.format(np.mean(throughput_efficiency),
                                         np.std(throughput_efficiency)))
 
+    # terminate the environment
+    env.unwrapped.terminate()
+
     # if prompted, convert the emission file into a csv file
     if args.gen_emission:
         time.sleep(0.1)
@@ -348,7 +354,6 @@ def visualizer_rllib(args):
         os_cmd += " -pix_fmt yuv420p " + dirs[-1] + ".mp4"
         os_cmd += "&& cp " + dirs[-1] + ".mp4 " + save_dir + "/"
         os.system(os_cmd)
-    '''
 
 
 def create_parser():
