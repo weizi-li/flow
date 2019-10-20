@@ -104,7 +104,11 @@ def visualizer_rllib(args):
     sim_params.restart_instance = True
     dir_path = os.path.dirname(os.path.realpath(__file__))
     emission_path = '{0}/test_time_rollout/'.format(dir_path)
-    sim_params.emission_path = emission_path if args.gen_emission else None
+    sim_params.emission_path = emission_path
+
+    #sim_params.emission_path = emission_path if args.gen_emission else None
+
+
 
     # pick your rendering mode
     if args.render_mode == 'sumo_web3d':
@@ -299,7 +303,7 @@ def visualizer_rllib(args):
     env.unwrapped.terminate()
 
     # if prompted, convert the emission file into a csv file
-    if args.gen_emission:
+    if True:
         time.sleep(0.1)
 
         dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -309,6 +313,7 @@ def visualizer_rllib(args):
             '{0}/test_time_rollout/{1}'.format(dir_path, emission_filename)
 
         emission_to_csv(emission_path)
+
 
     # if we wanted to save the render, here we create the movie
     if args.save_render:
