@@ -6,7 +6,7 @@ EXAMPLE_USAGE : str
     Example call to the function, which is
     ::
 
-        python ./visualizer_rllib.py /tmp/ray/result_dir 1
+        python ./visualizer_rllib.py /ray_results/experiment_dir/result_dir 1
 
 parser : ArgumentParser
     Command-line argument parser
@@ -103,10 +103,9 @@ def visualizer_rllib(args):
 
     sim_params.restart_instance = True
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    emission_path = '{0}/test_time_rollout/'.format(dir_path)
-    sim_params.emission_path = emission_path
+    emission_path = '{0}/test_policy_rollouts/'.format(dir_path)
+    sim_params.emission_path = emission_path if args.gen_emission else None
 
-    #sim_params.emission_path = emission_path if args.gen_emission else None
 
 
 
@@ -195,8 +194,7 @@ def visualizer_rllib(args):
     else:
         use_lstm = False
 
-    env.restart_simulation(
-        sim_params=sim_params, render=sim_params.render)
+    env.restart_simulation(sim_params=sim_params, render=sim_params.render)
 
     # Simulate and collect metrics
     final_outflows = []
@@ -303,15 +301,14 @@ def visualizer_rllib(args):
     env.unwrapped.terminate()
 
     # if prompted, convert the emission file into a csv file
-    if True:
+    if args.gen_emission:
         time.sleep(0.1)
 
-        dir_path = os.path.dirname(os.path.realpath(__file__))
+        # construct emission file path
         emission_filename = '{0}-emission.xml'.format(env.scenario.name)
+        emission_path = '{0}/test_policy_rollouts/{1}'.format(dir_path, emission_filename)
 
-        emission_path = \
-            '{0}/test_time_rollout/{1}'.format(dir_path, emission_filename)
-
+        # convert emission xml to csv
         emission_to_csv(emission_path)
 
 
@@ -343,8 +340,14 @@ def create_parser():
 
     # required input parameters
     parser.add_argument(
-        'result_dir', type=str, help='Directory containing results')
-    parser.add_argument('checkpoint_num', type=str, help='Checkpoint number.')
+        'result_dir',
+        type=str,
+        help='Directory containing results')
+
+    parser.add_argument(
+        'checkpoint_num',
+        type=str,
+        help='Checkpoint number.')
 
     # optional input parameters
     parser.add_argument(
@@ -362,12 +365,14 @@ def create_parser():
         help='The number of rollouts to visualize.')
     parser.add_argument(
         '--gen_emission',
-        action='store_true',
+        type=bool,
+        default=False,
         help='Specifies whether to generate an emission file from the '
              'simulation')
     parser.add_argument(
         '--evaluate',
-        action='store_true',
+        type=bool,
+        default=False,
         help='Specifies whether to use the \'evaluate\' reward '
              'for the environment.')
     parser.add_argument(
@@ -378,7 +383,8 @@ def create_parser():
              'rgbd and sumo_gui')
     parser.add_argument(
         '--save_render',
-        action='store_true',
+        type=bool,
+        default=False,
         help='Saves a rendered video to a file. NOTE: Overrides render_mode '
              'with pyglet rendering.')
     parser.add_argument(
