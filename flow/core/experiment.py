@@ -103,47 +103,90 @@ class Experiment:
             def rl_actions(*_):
                 return None
 
-        rets = []
+        rets = [] # returns
         mean_rets = []
         ret_lists = []
+
         vels = []
-        mean_vels = []
-        std_vels = []
-        outflows = []
+
+
+        mean_speed_over_all_rollouts= []
+        std_speed_over_all_rollouts = []
+        inflow_over_all_rollouts = []
+        outflow_over_all_rollouts = []
+
+
+        # for each run
         for i in range(num_runs):
             vel = np.zeros(num_steps)
             logging.info("Iter #" + str(i))
             ret = 0
             ret_list = []
             state = self.env.reset()
+
+            # for each step
             for j in range(num_steps):
+
+                # get the states, rewards, etc
                 state, reward, done, _ = self.env.step(rl_actions(state))
-                vel[j] = np.mean(
-                    self.env.k.vehicle.get_speed(self.env.k.vehicle.get_ids()))
+
+                # get speeds at all simulation steps
+                vel[j] = np.mean(self.env.k.vehicle.get_speed(self.env.k.vehicle.get_ids()))
+
+                # compute the return as the cumulative reward for all simulation steps
                 ret += reward
                 ret_list.append(reward)
 
                 if done:
                     break
+
             rets.append(ret)
             vels.append(vel)
             mean_rets.append(np.mean(ret_list))
             ret_lists.append(ret_list)
-            mean_vels.append(np.mean(vel))
-            std_vels.append(np.std(vel))
-            outflows.append(self.env.k.vehicle.get_outflow_rate(int(500)))
-            print("Round {0}, return: {1}".format(i, ret))
+
+            mean_speed_over_all_rollouts.append(np.mean(vel))
+            std_speed_over_all_rollouts.append(np.std(vel))
+
+            # get the outflows and inflows for the past 500 seconds, if the simulation is less than
+            # 500 seconds then this will get all inflows (the number of vehicles entering the network)
+            # and outflows (the number of vehicles leaving the network) during the whole simulation
+            inflow_over_all_rollouts.append(self.env.k.vehicle.get_inflow_rate(int(500)))
+            outflow_over_all_rollouts.append(self.env.k.vehicle.get_outflow_rate(int(500)))
+
+            # compute the throughput efficiency
+            if np.all(np.array(inflows) > 1e-5):
+                throughput_over_all_rollouts = [x / y for x, y in zip(outflow_over_all_rollouts, inflow_over_all_rollouts)]
+            else:
+                throughput_over_all_rollouts = [0] * len(inflow_over_all_rollouts)
 
         info_dict["returns"] = rets
         info_dict["velocities"] = vels
         info_dict["mean_returns"] = mean_rets
         info_dict["per_step_returns"] = ret_lists
-        info_dict["mean_outflows"] = np.mean(outflows)
+        info_dict["mean_inflows"] = np.mean(inflow_over_all_rollouts)
+        info_dict["mean_outflows"] = np.mean(outflow_over_all_rollouts)
 
-        print("Average, std return: {}, {}".format(
+        info_dict["max_spd_all"]  = np.max(mean_speed_over_all_rollouts)
+        info_dict["min_spd_all"]  = np.min(mean_speed_over_all_rollouts)
+        info_dict["mean_spd_all"] = np.mean(mean_speed_over_all_rollouts)
+        info_dict["std_spd_all"]  = np.std(mean_speed_over_all_rollouts)
+        info_dict["max_tpt_all"]  = np.max(throughput_over_all_rollouts)
+        info_dict["min_tpt_all"]  = np.min(throughput_over_all_rollouts)
+        info_dict["mean_tpt_all"] = np.mean(throughput_over_all_rollouts)
+        info_dict["std_tpt_all"]  = np.std(throughput_over_all_rollouts)
+
+
+        print("Round {0} -- Return: {1}".format(i, ret))
+        print("Return: {} (avg), {} (std)".format(
             np.mean(rets), np.std(rets)))
-        print("Average, std speed: {}, {}".format(
-            np.mean(mean_vels), np.std(mean_vels)))
+
+        print("Speed (m/s): {} (avg), {} (std)".format(
+            np.mean(mean_speed_over_all_rollouts), np.std(mean_speed_over_all_rollouts)))
+
+        print("Throughput (veh/hr): {} (avg), {} (std)".format(
+            np.mean(throughput_over_all_rollouts),np.std(throughput_over_all_rollouts)))
+
         self.env.terminate()
 
         if convert_to_csv:
@@ -158,5 +201,8 @@ class Experiment:
 
             # convert the emission file into a csv
             emission_to_csv(emission_path)
+
+            # Delete the .xml version of the emission file.
+            os.remove(emission_path)
 
         return info_dict
