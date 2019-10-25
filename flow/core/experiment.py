@@ -176,7 +176,7 @@ class Experiment:
         info_dict["mean_tpt_all"] = np.mean(throughput_over_all_rollouts)
         info_dict["std_tpt_all"]  = np.std(throughput_over_all_rollouts)
 
-        if True:
+        if output_to_terminal:
             print("Round {0} -- Return: {1}".format(i, ret))
             print("Return: {} (avg), {} (std)".format(
                 np.mean(rets), np.std(rets)))
