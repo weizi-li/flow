@@ -260,7 +260,7 @@ class TrafficLightGridEnv(Env):
         return - rewards.min_delay_unscaled(self) \
             - rewards.boolean_action_penalty(rl_actions >= 0.5, gain=1.0)
 
-    def reset(self):
+    def reset(self, render=None):
         """Reset the environment with a new inflow rate.
 
         The diverse set of inflows are used to generate a policy that is more
@@ -345,7 +345,7 @@ class TrafficLightGridEnv(Env):
                         net_params=net_params,
                         initial_config=self.initial_config)
 
-                    observation = super().reset()
+                    observation = super().reset(render = render)
 
                     # reset the timer to zero
                     self.time_counter = 0
@@ -356,7 +356,7 @@ class TrafficLightGridEnv(Env):
                     print('error on reset ', e)
 
         # perform the generic reset function
-        observation = super().reset()
+        observation = super().reset(render = render)
 
         # reset the timer to zero
         self.time_counter = 0
