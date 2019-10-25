@@ -117,7 +117,8 @@ def visualizer_rllib(args):
         sim_params.render = 'drgb'
         sim_params.pxpm = 4
     elif args.render_mode == 'sumo_gui':
-        sim_params.render = True
+        #sim_params.render = True
+        sim_params.render = False
         print('NOTE: With render mode {}, an extra instance of the SUMO GUI '
               'will display before the GUI for visualizing the result. Click '
               'the green Play arrow to continue.'.format(args.render_mode))
@@ -175,7 +176,7 @@ def visualizer_rllib(args):
     else:
         rets = []
 
-    if config['model']['use_lstm']:
+    if config['model'].get('use_lstm', False):
         use_lstm = True
         if multiagent:
             state_init = {}
@@ -194,7 +195,13 @@ def visualizer_rllib(args):
     else:
         use_lstm = False
 
-    env.restart_simulation(sim_params=sim_params, render=sim_params.render)
+    #env.restart_simulation(sim_params=sim_params, render=sim_params.render)
+    if args.render_mode == 'sumo_gui':
+        sim_params.render = True # set to true after initializing agent and env
+
+    # if restart_instance, don't restart here because env.reset will restart later
+    if not sim_params.restart_instance:
+        env.restart_simulation(sim_params, render=sim_params.render)
 
     # Simulate and collect metrics
     final_outflows = []
@@ -203,7 +210,8 @@ def visualizer_rllib(args):
     std_speed = []
     for i in range(args.num_rollouts):
         vel = []
-        state = env.reset()
+        #state = env.reset()
+        state = env.reset(render=sim_params.render)
         if multiagent:
             ret = {key: [0] for key in rets.keys()}
         else:
@@ -397,5 +405,5 @@ def create_parser():
 if __name__ == '__main__':
     parser = create_parser()
     args = parser.parse_args()
-    ray.init(num_cpus=1)
+    ray.init(num_cpus=1, local_mode=True)
     visualizer_rllib(args)

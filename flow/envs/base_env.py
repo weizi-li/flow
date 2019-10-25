@@ -399,7 +399,7 @@ class Env(*classdef):
 
         return next_observation, reward, done, infos
 
-    def reset(self):
+    def reset(self, render=None):
         """Reset the environment.
 
         This method is performed in between rollouts. It resets the state of
@@ -442,7 +442,8 @@ class Env(*classdef):
             self.k.vehicle = deepcopy(self.initial_vehicles)
             self.k.vehicle.master_kernel = self.k
             # restart the sumo instance
-            self.restart_simulation(self.sim_params)
+            #self.restart_simulation(self.sim_params)
+            self.restart_simulation(self.sim_params, render=render)
 
         # perform shuffling (if requested)
         elif self.initial_config.shuffle:

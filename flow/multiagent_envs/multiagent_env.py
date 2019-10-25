@@ -123,7 +123,7 @@ class MultiEnv(MultiAgentEnv, Env):
 
         return states, reward, done, infos
 
-    def reset(self, new_inflow_rate=None):
+    def reset(self, new_inflow_rate=None, render=None):
         """Reset the environment.
 
         This method is performed in between rollouts. It resets the state of
@@ -166,7 +166,7 @@ class MultiEnv(MultiAgentEnv, Env):
             self.k.vehicle = deepcopy(self.initial_vehicles)
             self.k.vehicle.master_kernel = self.k
             # restart the sumo instance
-            self.restart_simulation(self.sim_params)
+            self.restart_simulation(self.sim_params, render=render)
 
         # perform shuffling (if requested)
         elif self.initial_config.shuffle:
