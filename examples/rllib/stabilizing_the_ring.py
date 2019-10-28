@@ -25,7 +25,7 @@ HORIZON = 3000
 # number of rollouts per training iteration
 N_ROLLOUTS = 20
 # number of parallel workers
-N_CPUS = 2
+N_CPUS = 0
 
 # We place one autonomous vehicle and 22 human-driven vehicles in the network
 vehicles = VehicleParams()
@@ -138,7 +138,7 @@ def setup_exps():
 
 if __name__ == "__main__":
     alg_run, gym_name, config = setup_exps()
-    ray.init(num_cpus=N_CPUS + 1, redirect_output=False)
+    ray.init(num_cpus=N_CPUS + 1, redirect_output=False, local_mode=True)
     trials = run_experiments({
         flow_params["exp_tag"]: {
             "run": alg_run,

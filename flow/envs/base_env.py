@@ -441,6 +441,7 @@ class Env(*classdef):
 
             self.k.vehicle = deepcopy(self.initial_vehicles)
             self.k.vehicle.master_kernel = self.k
+
             # restart the sumo instance
             #self.restart_simulation(self.sim_params)
             self.restart_simulation(self.sim_params, render=render)

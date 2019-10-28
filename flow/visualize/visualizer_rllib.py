@@ -110,20 +110,14 @@ def visualizer_rllib(args):
 
 
     # pick your rendering mode
+    sim_params.render = False
+
     if args.render_mode == 'sumo_web3d':
         sim_params.num_clients = 2
-        sim_params.render = False
     elif args.render_mode == 'drgb':
         sim_params.render = 'drgb'
         sim_params.pxpm = 4
-    elif args.render_mode == 'sumo_gui':
-        #sim_params.render = True
-        sim_params.render = False
-        print('NOTE: With render mode {}, an extra instance of the SUMO GUI '
-              'will display before the GUI for visualizing the result. Click '
-              'the green Play arrow to continue.'.format(args.render_mode))
-    elif args.render_mode == 'no_render':
-        sim_params.render = False
+
     if args.save_render:
         sim_params.render = 'drgb'
         sim_params.pxpm = 4
@@ -195,13 +189,13 @@ def visualizer_rllib(args):
     else:
         use_lstm = False
 
-    #env.restart_simulation(sim_params=sim_params, render=sim_params.render)
     if args.render_mode == 'sumo_gui':
         sim_params.render = True # set to true after initializing agent and env
 
     # if restart_instance, don't restart here because env.reset will restart later
-    if not sim_params.restart_instance:
-        env.restart_simulation(sim_params, render=sim_params.render)
+    # if not sim_params.restart_instance:
+    #     env.restart_simulation(
+    #         sim_params=sim_params, render=sim_params.render)
 
     # Simulate and collect metrics
     final_outflows = []
